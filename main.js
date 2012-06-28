@@ -91,9 +91,14 @@ define(function (require, exports, module) {
 		}
 	}
 	
+	function onWindowResize() {
+		if (_command.getChecked() && DocumentManager.getCurrentDocument()) {
+			considerDirty();
+		}
+	}
+
 	function onDomModification(event) {
-		window.clearTimeout(_updateTimeout);
-		_updateTimeout = window.setTimeout(updateIndentations, updateDelay);
+		considerDirty();
 	}
 
 	// Functionality
@@ -124,6 +129,11 @@ define(function (require, exports, module) {
 		}
 		
 		window.clearTimeout(_updateTimeout);
+	}
+
+	function considerDirty() {
+		window.clearTimeout(_updateTimeout);
+		_updateTimeout = window.setTimeout(updateIndentations, updateDelay);
 	}
 
 	function updateIndentations() {
@@ -319,7 +329,16 @@ define(function (require, exports, module) {
 		$(DocumentManager).off("currentDocumentChange", onCurrentDocumentChange);
 	}
 
+
+	function loadResizeListener() {
+		$(window).on('resize', onWindowResize);
+	}
+
+	function unloadResizeListener() {
+		$(window).off('resize', onWindowResize);
+	}
 	
+
 	// Setup the UI
 	function load() {
 		loadPreferences();
@@ -327,10 +346,12 @@ define(function (require, exports, module) {
 		loadCommand();
 		loadMenuItem();
 		loadDocumentManager();
+		loadResizeListener();
 	}
 
 	// Tear down the UI
 	function unload() {
+		unloadResizeListener();
 		unloadDocumentManager();
 		unloadMenuItem();
 		unloadCommand();
