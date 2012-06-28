@@ -295,6 +295,7 @@ define(function (require, exports, module) {
 	}
 
 	function unloadCommand() {
+		_command.setChecked(false);
 		$(_command).off("checkedStateChange", onCheckedStateChange);
 		_command._commandFn = null;
 	}
