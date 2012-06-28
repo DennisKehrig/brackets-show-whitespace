@@ -305,7 +305,8 @@ define(function (require, exports, module) {
 	}
 
 	function unloadMenuItem() {
-		Menus.getMenu("view-menu").removeMenuItem(commandId);
+		// Not implemented
+		// Menus.getMenu("view-menu").removeMenuItem(commandId);
 	}
 
 	
