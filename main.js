@@ -23,7 +23,7 @@
  */
 
 /*jslint vars: true, plusplus: true, devel: true, regexp: true, nomen: true, indent: 4, maxerr: 50 */
-/*global define, $, brackets, less, Node */
+/*global define, $, brackets, less, Node, CodeMirror */
 
 
 define(function (require, exports, module) {
@@ -31,10 +31,9 @@ define(function (require, exports, module) {
 
 	
 	// --- Required modules ---
-	
+
 	var Commands           = brackets.getModule("command/Commands");
 	var CommandManager     = brackets.getModule("command/CommandManager");
-	var DocumentManager    = brackets.getModule("document/DocumentManager");
 	var EditorManager      = brackets.getModule("editor/EditorManager");
 	var Menus              = brackets.getModule("command/Menus");
 	var PreferencesManager = brackets.getModule("preferences/PreferencesManager");
@@ -45,10 +44,6 @@ define(function (require, exports, module) {
 	var preferencesId      = "denniskehrig.ShowIndentation";
 	var defaultPreferences = { checked: false };
 	var commandId          = "denniskehrig.ShowIndentation.toggle";
-	var lineSelector       = '>pre';
-	var updateDelay        = 20;
-	var updateEvents       = 'DOMNodeInserted DOMNodeRemoved';
-	var defaultTabWidth    = 4;
 
 	
 	// --- State Variables ---
@@ -56,13 +51,10 @@ define(function (require, exports, module) {
 	var _preferences;
 	var _command;
 	var _$styleTag;
-	
-	var _$lineParent;
-	var _$indentParent;
-	var _tabWidth;
-	
-	var _updateTimeout;
 
+	var _Line;
+	var _LineGetHTML;
+	
 
 	// --- Event Handlers ---
 
@@ -76,172 +68,83 @@ define(function (require, exports, module) {
 
 	function onCheckedStateChange() {
 		_preferences.setValue("checked", Boolean(_command.getChecked()));
-		
-		if (! _command.getChecked()) {
-			hideIndentations();
-		} else if (DocumentManager.getCurrentDocument()) {
-			showIndentations();
-		}
-	}
-
-	function onCurrentDocumentChange() {
-		hideIndentations();
-		if (_command.getChecked() && DocumentManager.getCurrentDocument()) {
-			showIndentations();
-		}
-	}
-	
-	function onWindowResize() {
-		if (_command.getChecked() && DocumentManager.getCurrentDocument()) {
-			considerDirty();
-		}
-	}
-
-	function onDomModification(event) {
-		considerDirty();
+		refreshCodeMirror();
 	}
 
 	// Functionality
 
-	function showIndentations() {
-		if (! _$indentParent || ! _$lineParent) {
-			_tabWidth = getTabWidth();
-			
-			_$lineParent   = $('.CodeMirror-lines > div > div:last-child');
-			_$indentParent = $("<div>").attr("id", "denniskehrig-ShowIndentation-indentations").insertAfter(_$lineParent);
-			
-			_$lineParent.on(updateEvents, onDomModification);
-			_$indentParent.show();
-		}
-		
-		updateIndentations();
-	}
+	function refreshCodeMirror() {
+		var fullEditor = EditorManager.getCurrentFullEditor();
+		if (! fullEditor || ! fullEditor._codeMirror) { return; }
 
-	function hideIndentations() {
-		if (_$lineParent) {
-			_$lineParent.off(updateEvents, onDomModification);
-			_$lineParent = null;
-		}
-		
-		if (_$indentParent) {
-			_$indentParent.remove();
-			_$indentParent = null;
-		}
-		
-		window.clearTimeout(_updateTimeout);
-	}
-
-	function considerDirty() {
-		window.clearTimeout(_updateTimeout);
-		_updateTimeout = window.setTimeout(updateIndentations, updateDelay);
-	}
-
-	function updateIndentations() {
-		var $lines = _$lineParent.find(lineSelector);
-		var $indents = _$indentParent.children();
-
-		// Remove indentations for lines that don't exist anymore
-		for (var i = $indents.length - 1; i >= $lines.length; i--) {
-			$indents.eq(i).remove();
+		if (_command.getChecked()) {
+			patchCodeMirror(fullEditor._codeMirror);
+		} else {
+			unpatchCodeMirror();
 		}
 
-		// Go through each line and update the indentations
-		// TODO: optimize to update only changed lines (tedious to detect)
-		$lines.each(function (index) {
-			var indentation, hasContent, i, node, text, length;
-			
-			indentation = "";
-			hasContent  = false;
-
-			for (i = 0; i < this.childNodes.length; i++) {
-				node = this.childNodes[i];
-				// Not an indentation node => reached end of indentation
-				if (! (text = textOfIndentationNode(node))) {
-					hasContent = true;
-					break;
-				}
-				length = text.length;
-				text = text.replace(/[^\t ].*$/, '');
-				indentation += text;
-				// Text contains not just spaces and tabs => reached end of indentation
-				if (text.length !== length) {
-					hasContent = true;
-					break;
-				}
-			}
-
-			// Probably just a <pre> with one space just so it has a height => empty line
-			if (indentation === " " && ! hasContent) {
-				indentation = "";
-			}
-
-			if (indentation === "") {
-				// One space so our <pre> has a height
-				indentation = " ";
-			} else {
-				// Replace the white-space based indentation with · for spaces and <span> for tabs
-				indentation = stringForIndentation(indentation, _tabWidth);
-			}
-
-			// Reuse or create the indentation pre for the current line
-			var $indent;
-			if (index >= $indents.length) {
-				$indent = $("<pre>").appendTo(_$indentParent);
-			} else {
-				$indent = $indents.eq(index);
-			}
-
-			// Update the indentation marker and move it to the correct position
-			// Setting the top is necessary
-			$indent.html(indentation).css('top', this.offsetTop);
+		fullEditor._codeMirror.refresh();
+		$.each(EditorManager.getInlineEditors(fullEditor), function (index, inlineEditor) {
+			inlineEditor._codeMirror.refresh();
 		});
 	}
 
-	function textOfIndentationNode(node) {
-		if (node.nodeType === Node.TEXT_NODE) {
-			return node.nodeValue;
-		}
-		
-		var klass;
-		if (node.nodeType === Node.ELEMENT_NODE && (klass = node.getAttribute("class")) && klass.slice(0, 6) === "cm-tab") {
-			return "\t";
-		}
+	function patchCodeMirror(codeMirror) {
+		// Avoid double patching
+		if (_Line && _LineGetHTML) { return; }
+
+		// Remember Line and Line.getHTML to be able to unpatch without a reference to CM
+		_Line = Object.getPrototypeOf(codeMirror.getLineHandle(0));
+		_LineGetHTML = _Line.getHTML;
+
+		// Closure to make our getHTML independent of this extension
+		var _super = _Line.getHTML;
+		_Line.getHTML = function getHTML(makeTab, wrapAt, wrapId, wrapWBR) {
+			var html = _super.apply(this, arguments);
+			
+			// Nothing to do
+			if (! _command || ! _command.getChecked() || html === " ") { return html; }
+			
+			var space = '<span class="cm-space indentation"> </span>';
+			var tabOn = '<span class="cm-tab indentation">';
+			var tabOff = '</span>';
+			var cmTabOn = '<span class="cm-tab">';
+			
+			var prefix = [];
+			var offset = 0;
+			
+			while (true) {
+				if (html.slice(offset, offset + 1) === ' ') {
+					offset += 1;
+					prefix.push(space);
+				}
+				else if (html.slice(offset, offset + cmTabOn.length) === cmTabOn) {
+					offset += cmTabOn.length;
+					var stop = html.indexOf(tabOff, offset);
+					prefix.push(tabOn, html.slice(offset, stop), tabOff);
+					offset += stop - offset + tabOff.length;
+				}
+				else {
+					break;
+				}
+			}
+
+			prefix.push(html.slice(offset));
+			return prefix.join("");
+		};
 	}
 
-	function stringForIndentation(string, tabWidth) {
-		var indentation = "", length = 0;
-		
-		for (var i = 0; i < string.length; i++) {
-			var c = string.charAt(i);
-			if (c === '\t') {
-				var add = (tabWidth - (length % tabWidth));
-				length += add;
-				indentation += '<span>';
-				while (add--) {
-					indentation += ' ';
-				}
-				indentation += '</span>';
-			} else {
-				indentation += '·';
-				length += 1;
-			}
+	function unpatchCodeMirror() {
+		if (_Line && _LineGetHTML) {
+			_Line.getHTML = _LineGetHTML;
+			_LineGetHTML = null;
+			_Line = null;
 		}
-
-		return indentation;
 	}
 
 	
 	// --- Helper Functions ---
 	
-	function getTabWidth() {
-		var editor = EditorManager.getCurrentFullEditor();
-		if (editor && editor._codeMirror) {
-			return editor._codeMirror.getOption("tabSize");
-		}
-		console.log("Using default tab width");
-		return defaultTabWidth;
-	}
-
 	/** Find this extension's directory relative to the brackets root */
 	function extensionDirForBrowser() {
 		var bracketsIndex = window.location.pathname;
@@ -320,24 +223,6 @@ define(function (require, exports, module) {
 		// Menus.getMenu("view-menu").removeMenuItem(commandId);
 	}
 
-	
-	function loadDocumentManager() {
-		$(DocumentManager).on("currentDocumentChange", onCurrentDocumentChange);
-	}
-	
-	function unloadDocumentManager() {
-		$(DocumentManager).off("currentDocumentChange", onCurrentDocumentChange);
-	}
-
-
-	function loadResizeListener() {
-		$(window).on('resize', onWindowResize);
-	}
-
-	function unloadResizeListener() {
-		$(window).off('resize', onWindowResize);
-	}
-	
 
 	// Setup the UI
 	function load() {
@@ -345,14 +230,10 @@ define(function (require, exports, module) {
 		loadStyle();
 		loadCommand();
 		loadMenuItem();
-		loadDocumentManager();
-		loadResizeListener();
 	}
 
 	// Tear down the UI
 	function unload() {
-		unloadResizeListener();
-		unloadDocumentManager();
 		unloadMenuItem();
 		unloadCommand();
 		unloadStyle();

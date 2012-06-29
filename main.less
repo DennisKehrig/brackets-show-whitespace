@@ -22,32 +22,28 @@
  *
  */
 
-#denniskehrig-ShowIndentation-indentations {
-	position: absolute;
-	top: 0;
-	left: 0;
-	z-index: -1;
-	user-select: none;
-	color: #bbb;
 
-	pre {
-		position: absolute;
-		left: 0;
-		span {
-			position: relative;
-			display: inline-block;
-			line-height: 0.5;
-			vertical-align: top;
-			
-			&:before {
-				content: "";
-				position: absolute;
-				display: block;
-				border-bottom: 1px solid #ccc;
-				height: 100%;
-				left: 1px;
-				right: 1px;
-			}
+.CodeMirror {
+	.cm-space.indentation, .cm-tab.indentation {
+		position: relative;
+		&:before {
+			content: "";
+			position: absolute;
+			display: block;
+			height: 0;
+			top: 50%;
 		}
+	}
+	.cm-space.indentation:before {
+		left: 50%;
+		width: 2px;
+		height: 2px;
+		background-color: #ccc;
+		border-radius: 5px;
+	}
+	.cm-tab.indentation:before {
+		border-bottom: 1px solid #ccc;
+		left: 1px;
+		right: 1px;
 	}
 }
