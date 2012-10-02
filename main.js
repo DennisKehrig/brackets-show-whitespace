@@ -97,6 +97,14 @@ define(function (require, exports, module) {
 		_Line = Object.getPrototypeOf(codeMirror.getLineHandle(0));
 		_LineGetHTML = _Line.getHTML;
 
+		// Constants
+		var TAG_CLOSE         = '</span>';
+		var CM_TAB            = '<span class="cm-tab">';
+		var TAB_NORMAL        = '<span class="cm-tab">';
+		var TAB_INDENTATION   = '<span class="cm-tab indentation">';
+		var SPACE_NORMAL      = '<span class="cm-space">'
+		var SPACE_INDENTATION = '<span class="cm-space indentation">';
+
 		// Closure to make our getHTML independent of this extension
 		var _super = _Line.getHTML;
 		_Line.getHTML = function getHTML(makeTab, wrapAt, wrapId, wrapWBR) {
@@ -105,32 +113,89 @@ define(function (require, exports, module) {
 			// Nothing to do
 			if (! _command || ! _command.getChecked() || html === " ") { return html; }
 			
-			var space = '<span class="cm-space indentation"> </span>';
-			var tabOn = '<span class="cm-tab indentation">';
-			var tabOff = '</span>';
-			var cmTabOn = '<span class="cm-tab">';
+			// Local variables for the loop
+			var pos, part;
 			
-			var prefix = [];
+			// Optimizations
+			var length = html.length;
+
+			// Output
+			var output = [];
+			
+			// State
 			var offset = 0;
+			var tags   = [];
 			
-			while (true) {
-				if (html.slice(offset, offset + 1) === ' ') {
-					offset += 1;
-					prefix.push(space);
+			var indentation = true;
+			var spaceOpen   = SPACE_INDENTATION;
+			var tabOpen     = TAB_INDENTATION;
+
+			while (offset < length) {
+				// Tag mode
+				if (html.slice(offset, offset + 1) === '<'){
+					// Look for the end of the tag
+					pos  = html.indexOf('>', offset + 1);
+					part = html.slice(offset, pos + 1);
+					
+					// Update the state
+					offset = pos + 1;
+					if (part.slice(1, 2) === '/') {
+						tags.pop();
+					} else {
+						tags.push(part);
+					}
+
+					// Inject the indentation class if necessary
+					if (part === CM_TAB) { part = tabOpen; }
 				}
-				else if (html.slice(offset, offset + cmTabOn.length) === cmTabOn) {
-					offset += cmTabOn.length;
-					var stop = html.indexOf(tabOff, offset);
-					prefix.push(tabOn, html.slice(offset, stop), tabOff);
-					offset += stop - offset + tabOff.length;
-				}
+				// Text mode
 				else {
-					break;
+					// Look for the start of a tag
+					pos = html.indexOf('<', offset);
+					// The entire rest of the string is escaped text
+					if (pos === -1) { pos = length + 1; }
+					part = html.slice(offset, pos);
+					
+					// Update the state
+					offset = pos;
+
+					// No need to handle empty strings
+					if (part === '') { continue; }
+
+					// Leave the spaces in tabs as they are
+					if (tags[tags.length - 1] !== CM_TAB) {
+						// Find out if the indentation ends in this part
+						if (indentation) {
+							// Consume indentation spaces
+							for (pos = 0; pos < part.length && part.slice(pos, pos + 1) === ' '; pos++) {
+								output.push(spaceOpen, ' ', TAG_CLOSE);
+							}
+							// The part contains non-space characters: end of indentation
+							if (pos < part.length) {
+								indentation = false;
+							}
+							// Remove the spaces we have consumed
+							part = part.slice(pos);
+							// The rest of the part will be handled further below
+
+							// From now on, don't set the indentation class in the HTML output
+							if (! indentation) {
+								spaceOpen = SPACE_NORMAL;
+								tabOpen   = TAB_NORMAL;
+							}
+						}
+						
+						// Mark the spaces appropriately
+						part = part.replace(/ /g, spaceOpen + ' ' + TAG_CLOSE);
+					}
 				}
+				
+				// Add the part to the output
+				output.push(part);
 			}
 
-			prefix.push(html.slice(offset));
-			return prefix.join("");
+			output = output.join("");
+			return output;
 		};
 	}
 

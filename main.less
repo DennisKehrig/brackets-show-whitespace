@@ -24,7 +24,7 @@
 
 
 .CodeMirror {
-	.cm-space.indentation, .cm-tab.indentation {
+	.cm-space, .cm-tab {
 		position: relative;
 		&:before {
 			content: "";
@@ -34,16 +34,23 @@
 			top: 50%;
 		}
 	}
-	.cm-space.indentation:before {
+	.cm-space:before {
 		left: 50%;
+		margin-left: -1px;
 		width: 2px;
 		height: 2px;
-		background-color: #ccc;
+		background-color: #f0f;
 		border-radius: 5px;
 	}
-	.cm-tab.indentation:before {
-		border-bottom: 1px solid #ccc;
+	.cm-tab:before {
+		border-bottom: 1px solid #f0f;
 		left: 1px;
 		right: 1px;
+	}
+	.cm-space.indentation:before {
+		background-color: #ccc;
+	}
+	.cm-tab.indentation:before {
+		border-bottom-color: #ccc;
 	}
 }
