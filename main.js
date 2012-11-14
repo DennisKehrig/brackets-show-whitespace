@@ -111,7 +111,7 @@ define(function (require, exports, module) {
 			var html = _super.apply(this, arguments);
 			
 			// Nothing to do
-			if (! _command || ! _command.getChecked() || html === " ") { return html; }
+			if (! _command || ! _command.getChecked() || ! this.text) { return html; }
 			
 			// Local variables for the loop
 			var pos, part;
