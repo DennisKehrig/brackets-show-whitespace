@@ -27,7 +27,7 @@
 
 
 define(function (require, exports, module) {
-	'use strict';
+	"use strict";
 
 	
 	// --- Required modules ---
@@ -98,12 +98,12 @@ define(function (require, exports, module) {
 		_LineGetHTML = _Line.getHTML;
 
 		// Constants
-		var TAG_CLOSE     = '</span>';
-		var CM_TAB        = '<span class="cm-tab">';
-		var TAB_NORMAL    = '<span class="cm-tab dk-normal">';
-		var TAB_LEADING   = '<span class="cm-tab dk-leading">';
-		var SPACE_NORMAL  = '<span class="cm-space dk-normal">'
-		var SPACE_LEADING = '<span class="cm-space dk-leading">';
+		var TAG_CLOSE     = "</span>";
+		var CM_TAB        = "<span class=\"cm-tab\">";
+		var TAB_NORMAL    = "<span class=\"cm-tab dk-normal\">";
+		var TAB_LEADING   = "<span class=\"cm-tab dk-leading\">";
+		var SPACE_NORMAL  = "<span class=\"cm-space dk-normal\">"
+		var SPACE_LEADING = "<span class=\"cm-space dk-leading\">";
 
 		// Closure to make our getHTML independent of this extension
 		var _super = _Line.getHTML;
@@ -132,14 +132,14 @@ define(function (require, exports, module) {
 
 			while (offset < length) {
 				// Tag mode
-				if (html.slice(offset, offset + 1) === '<'){
+				if (html.slice(offset, offset + 1) === "<"){
 					// Look for the end of the tag
-					pos  = html.indexOf('>', offset + 1);
+					pos  = html.indexOf(">", offset + 1);
 					part = html.slice(offset, pos + 1);
 					
 					// Update the state
 					offset = pos + 1;
-					if (part.slice(1, 2) === '/') {
+					if (part.slice(1, 2) === "/") {
 						tags.pop();
 					} else {
 						tags.push(part);
@@ -151,7 +151,7 @@ define(function (require, exports, module) {
 				// Text mode
 				else {
 					// Look for the start of a tag
-					pos = html.indexOf('<', offset);
+					pos = html.indexOf("<", offset);
 					// The entire rest of the string is escaped text
 					if (pos === -1) { pos = length + 1; }
 					part = html.slice(offset, pos);
@@ -160,15 +160,15 @@ define(function (require, exports, module) {
 					offset = pos;
 
 					// No need to handle empty strings
-					if (part === '') { continue; }
+					if (part === "") { continue; }
 
 					// Leave the spaces in tabs as they are
 					if (tags[tags.length - 1] !== CM_TAB) {
 						// Find out if the indentation ends in this part
 						if (leading) {
 							// Consume indentation spaces
-							for (pos = 0; pos < part.length && part.slice(pos, pos + 1) === ' '; pos++) {
-								output.push(spaceOpen, ' ', TAG_CLOSE);
+							for (pos = 0; pos < part.length && part.slice(pos, pos + 1) === " "; pos++) {
+								output.push(spaceOpen, " ", TAG_CLOSE);
 							}
 							// The part contains non-space characters: end of indentation
 							if (pos < part.length) {
@@ -186,7 +186,7 @@ define(function (require, exports, module) {
 						}
 						
 						// Mark the spaces appropriately
-						part = part.replace(/ /g, spaceOpen + ' ' + TAG_CLOSE);
+						part = part.replace(/ /g, spaceOpen + " " + TAG_CLOSE);
 					}
 				}
 				
