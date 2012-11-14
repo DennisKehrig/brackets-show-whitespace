@@ -145,30 +145,34 @@ define(function (require, exports, module) {
 	
 	// --- Helper Functions ---
 	
-	/** Find this extension's directory relative to the brackets root */
-	function extensionDirForBrowser() {
-		var bracketsIndex = window.location.pathname;
-		var bracketsDir   = bracketsIndex.substr(0, bracketsIndex.lastIndexOf('/') + 1);
-		var extensionDir  = bracketsDir + require.toUrl('./');
-
-		return extensionDir;
+	/** Find the URL to this extension's directory */
+	function extensionDirUrl() {
+		var url = brackets.platform === "win" ? "file:///" : "file://localhost";
+		url += require.toUrl("./").replace(/\.\/$/, "");
+		
+		return url;
 	}
 
 	/** Loads a less file as CSS into the document */
 	function loadLessFile(file, dir) {
 		var result = $.Deferred();
-		
+
 		// Load the Less code
-		$.get(dir + file, function (code) {
-			// Parse it
-			var parser = new less.Parser({ filename: file, paths: [dir] });
-			parser.parse(code, function onParse(err, tree) {
-				console.assert(!err, err);
-				// Convert it to CSS and append that to the document head
-				var $node = $("<style>").text(tree.toCSS()).appendTo(window.document.head);
-				result.resolve($node);
-			});
-		});
+		$.get(dir + file)
+			.done(function (code) {
+				// Parse it
+				var parser = new less.Parser({ filename: file, paths: [dir] });
+				parser.parse(code, function onParse(err, tree) {
+					console.assert(!err, err);
+					// Convert it to CSS and append that to the document head
+					var $node = $("<style>").text(tree.toCSS()).appendTo(window.document.head);
+					result.resolve($node);
+				});
+			})
+			.fail(function (request, error) {
+				result.reject(error);
+			})
+		;
 		
 		return result.promise();
 	}
@@ -182,7 +186,7 @@ define(function (require, exports, module) {
 
 
 	function loadStyle() {
-		loadLessFile("main.less", extensionDirForBrowser()).done(function ($node) {
+		loadLessFile("main.less", extensionDirUrl()).done(function ($node) {
 			_$styleTag = $node;
 		});
 	}
@@ -215,7 +219,7 @@ define(function (require, exports, module) {
 
 	
 	function loadMenuItem() {
-		Menus.getMenu("view-menu").addMenuItem(commandId, "Ctrl-Shift-W");
+		Menus.getMenu("view-menu").addMenuItem(commandId, "Ctrl-Alt-W");
 	}
 
 	function unloadMenuItem() {
