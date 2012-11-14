@@ -41,9 +41,9 @@ define(function (require, exports, module) {
 	
 	// --- Settings ---
 	
-	var preferencesId      = "denniskehrig.ShowIndentation";
+	var preferencesId      = "denniskehrig.ShowWhitespace";
 	var defaultPreferences = { checked: false };
-	var commandId          = "denniskehrig.ShowIndentation.toggle";
+	var commandId          = "denniskehrig.ShowWhitespace.toggle";
 
 	
 	// --- State Variables ---
@@ -265,7 +265,7 @@ define(function (require, exports, module) {
 		_command = CommandManager.get(commandId);
 		
 		if (! _command) {
-			_command = CommandManager.register("Show Indentations", commandId, onCommandExecuted);
+			_command = CommandManager.register("Show Whitespace", commandId, onCommandExecuted);
 		} else {
 			_command._commandFn = onCommandExecuted;
 		}

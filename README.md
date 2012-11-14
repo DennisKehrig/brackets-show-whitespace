@@ -1,26 +1,30 @@
-# Show Indentations in Brackets
+# Show Whitespace in Brackets
 
-[Brackets](http://brackets.io/) extension to visualize indentations (spaces and tabs at the beginning of lines) like [Sublime Text](http://www.sublimetext.com/) does. Adds an entry called "Show Indentations" to the View menu, the shortcut is Command-Shift-W (or Ctrl-Shift-W on Windows). The state is remembered next time you start Brackets.
+[Brackets](http://brackets.io/) extension to visualize whitespace (spaces and tabs) like [Sublime Text](http://www.sublimetext.com/) does. Adds an entry called "Show Whitespace" to the View menu, the shortcut is Command-Shift-W (or Ctrl-Shift-W on Windows). The state is remembered next time you start Brackets.
 
-This extension overwrites `Line.getHTML` (part of [CodeMirror](http://codemirror.net/)) and modifies its output. Spaces in the indentation are wrapped as `<span class="cm-space indentation"> </span>`. CodeMirror itself already handles tabs simililarly, this extension turns those into `<span class="cm-tab indentation"> </span>` if they are part of the whitespace starting a line.
+This extension overwrites `Line.getHTML` (part of [CodeMirror](http://codemirror.net/)) and modifies its output. Spaces in the indentation are wrapped as `<span class="cm-space dk-leading"> </span>`, normal spaces as `<span class="cm-space dk-normal"> </span>`. CodeMirror itself already handles tabs similarly, this extension turns those into `<span class="cm-tab dk-leading"> </span>` if they are part of the whitespace starting a line and `<span class="cm-tab dk-normal"> </span>` otherwise.
 
 The styles are defined in `main.less` which is compiled to CSS and loaded into Brackets when loading the extension.
 
-Indentations in inline editors are visualized as well.
+Whitespace in inline editors is visualized as well.
 
 
 ## Install
 
 Clone the extension into the disabled extensions folder of Brackets:
 
-    git clone git://github.com/DennisKehrig/brackets-show-indentations.git brackets/src/extensions/disabled/ShowIndentations
+    git clone git://github.com/DennisKehrig/brackets-show-whitespace.git brackets/src/extensions/disabled/ShowWhitespace
 
 Create a link to enable the extension:
 
-    ln -s ../disabled/ShowIndentations brackets/src/extensions/user/ShowIndentations
+    ln -s ../disabled/ShowWhitespace brackets/src/extensions/user/ShowWhitespace
 
 
 ## Changelog
+
+### 2012-11-14
+
+Changed the name to "Show Whitespace" as all whitespace is visualized now.
 
 ### 2012-06-29
 
