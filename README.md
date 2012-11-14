@@ -11,13 +11,10 @@ Whitespace in inline editors is visualized as well.
 
 ## Install
 
-Clone the extension into the disabled extensions folder of Brackets:
+Open Brackets and click Help > Show Extensions Folder
+Clone the extension into the user subdirectory:
 
-    git clone git://github.com/DennisKehrig/brackets-show-whitespace.git brackets/src/extensions/disabled/ShowWhitespace
-
-Create a link to enable the extension:
-
-    ln -s ../disabled/ShowWhitespace brackets/src/extensions/user/ShowWhitespace
+    git clone git://github.com/DennisKehrig/brackets-show-whitespace.git user/ShowWhitespace
 
 
 ## Changelog
