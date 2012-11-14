@@ -32,18 +32,24 @@
 			display: block;
 			height: 0;
 			top: 50%;
+			background-color: #ccc;
+			border-radius: 1ex;
+			height: 0.2ex;
 		}
 	}
 	.cm-space.indentation:before {
 		left: 50%;
-		width: 2px;
-		height: 2px;
-		background-color: #ccc;
-		border-radius: 5px;
+		width:        0.2ex;
+		margin-left: -0.1ex;
+		
+		min-width:  2px;
+		min-height: 2px;
 	}
 	.cm-tab.indentation:before {
-		border-bottom: 1px solid #ccc;
-		left: 1px;
-		right: 1px;
+		left: 0.2ex;
+		right: 0.2ex;
+		
+		min-width:  2px;
+		min-height: 1px;
 	}
 }
