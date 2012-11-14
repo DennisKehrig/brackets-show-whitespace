@@ -98,12 +98,12 @@ define(function (require, exports, module) {
 		_LineGetHTML = _Line.getHTML;
 
 		// Constants
-		var TAG_CLOSE         = '</span>';
-		var CM_TAB            = '<span class="cm-tab">';
-		var TAB_NORMAL        = '<span class="cm-tab">';
-		var TAB_INDENTATION   = '<span class="cm-tab indentation">';
-		var SPACE_NORMAL      = '<span class="cm-space">'
-		var SPACE_INDENTATION = '<span class="cm-space indentation">';
+		var TAG_CLOSE     = '</span>';
+		var CM_TAB        = '<span class="cm-tab">';
+		var TAB_NORMAL    = '<span class="cm-tab dk-normal">';
+		var TAB_LEADING   = '<span class="cm-tab dk-leading">';
+		var SPACE_NORMAL  = '<span class="cm-space dk-normal">'
+		var SPACE_LEADING = '<span class="cm-space dk-leading">';
 
 		// Closure to make our getHTML independent of this extension
 		var _super = _Line.getHTML;
@@ -126,9 +126,9 @@ define(function (require, exports, module) {
 			var offset = 0;
 			var tags   = [];
 			
-			var indentation = true;
-			var spaceOpen   = SPACE_INDENTATION;
-			var tabOpen     = TAB_INDENTATION;
+			var leading   = true;
+			var spaceOpen = SPACE_LEADING;
+			var tabOpen   = TAB_LEADING;
 
 			while (offset < length) {
 				// Tag mode
@@ -145,7 +145,7 @@ define(function (require, exports, module) {
 						tags.push(part);
 					}
 
-					// Inject the indentation class if necessary
+					// Inject the leading class if necessary
 					if (part === CM_TAB) { part = tabOpen; }
 				}
 				// Text mode
@@ -165,21 +165,21 @@ define(function (require, exports, module) {
 					// Leave the spaces in tabs as they are
 					if (tags[tags.length - 1] !== CM_TAB) {
 						// Find out if the indentation ends in this part
-						if (indentation) {
+						if (leading) {
 							// Consume indentation spaces
 							for (pos = 0; pos < part.length && part.slice(pos, pos + 1) === ' '; pos++) {
 								output.push(spaceOpen, ' ', TAG_CLOSE);
 							}
 							// The part contains non-space characters: end of indentation
 							if (pos < part.length) {
-								indentation = false;
+								leading = false;
 							}
 							// Remove the spaces we have consumed
 							part = part.slice(pos);
 							// The rest of the part will be handled further below
 
-							// From now on, don't set the indentation class in the HTML output
-							if (! indentation) {
+							// From now on, don't set the leading class in the HTML output
+							if (! leading) {
 								spaceOpen = SPACE_NORMAL;
 								tabOpen   = TAB_NORMAL;
 							}
@@ -210,30 +210,34 @@ define(function (require, exports, module) {
 	
 	// --- Helper Functions ---
 	
-	/** Find this extension's directory relative to the brackets root */
-	function extensionDirForBrowser() {
-		var bracketsIndex = window.location.pathname;
-		var bracketsDir   = bracketsIndex.substr(0, bracketsIndex.lastIndexOf('/') + 1);
-		var extensionDir  = bracketsDir + require.toUrl('./');
-
-		return extensionDir;
+	/** Find the URL to this extension's directory */
+	function extensionDirUrl() {
+		var url = brackets.platform === "win" ? "file:///" : "file://localhost";
+		url += require.toUrl("./").replace(/\.\/$/, "");
+		
+		return url;
 	}
 
 	/** Loads a less file as CSS into the document */
 	function loadLessFile(file, dir) {
 		var result = $.Deferred();
-		
+
 		// Load the Less code
-		$.get(dir + file, function (code) {
-			// Parse it
-			var parser = new less.Parser({ filename: file, paths: [dir] });
-			parser.parse(code, function onParse(err, tree) {
-				console.assert(!err, err);
-				// Convert it to CSS and append that to the document head
-				var $node = $("<style>").text(tree.toCSS()).appendTo(window.document.head);
-				result.resolve($node);
-			});
-		});
+		$.get(dir + file)
+			.done(function (code) {
+				// Parse it
+				var parser = new less.Parser({ filename: file, paths: [dir] });
+				parser.parse(code, function onParse(err, tree) {
+					console.assert(!err, err);
+					// Convert it to CSS and append that to the document head
+					var $node = $("<style>").text(tree.toCSS()).appendTo(window.document.head);
+					result.resolve($node);
+				});
+			})
+			.fail(function (request, error) {
+				result.reject(error);
+			})
+		;
 		
 		return result.promise();
 	}
@@ -247,7 +251,7 @@ define(function (require, exports, module) {
 
 
 	function loadStyle() {
-		loadLessFile("main.less", extensionDirForBrowser()).done(function ($node) {
+		loadLessFile("main.less", extensionDirUrl()).done(function ($node) {
 			_$styleTag = $node;
 		});
 	}
@@ -280,7 +284,7 @@ define(function (require, exports, module) {
 
 	
 	function loadMenuItem() {
-		Menus.getMenu("view-menu").addMenuItem(commandId, "Ctrl-Shift-W");
+		Menus.getMenu("view-menu").addMenuItem(commandId, "Ctrl-Alt-W");
 	}
 
 	function unloadMenuItem() {

@@ -22,9 +22,8 @@
  *
  */
 
-
 .CodeMirror {
-	.cm-space, .cm-tab {
+	.cm-space.dk-leading, .cm-tab.dk-leading, .cm-space.dk-normal, .cm-tab.dk-normal {
 		position: relative;
 		&:before {
 			content: "";
@@ -32,25 +31,30 @@
 			display: block;
 			height: 0;
 			top: 50%;
+			background-color: #ccc;
+			border-radius: 1ex;
+			height: 0.2ex;
 		}
 	}
-	.cm-space:before {
+	.cm-space.dk-leading:before, .cm-space.dk-normal:before {
 		left: 50%;
-		margin-left: -1px;
-		width: 2px;
-		height: 2px;
+		width:        0.2ex;
+		margin-left: -0.1ex;
+
+		min-width:  2px;
+		min-height: 2px;
+	}
+	.cm-tab.dk-leading:before, .cm-tab.dk-normal:before {
+		left: 0.2ex;
+		right: 0.2ex;
+
+		min-width:  2px;
+		min-height: 1px;
+	}
+	.cm-space.dk-leading:before, .cm-tab.dk-leading:before {
 		background-color: #f0f;
-		border-radius: 5px;
 	}
-	.cm-tab:before {
-		border-bottom: 1px solid #f0f;
-		left: 1px;
-		right: 1px;
-	}
-	.cm-space.indentation:before {
+	.cm-space.dk-normal:before, .cm-tab.dk-normal:before {
 		background-color: #ccc;
-	}
-	.cm-tab.indentation:before {
-		border-bottom-color: #ccc;
 	}
 }
