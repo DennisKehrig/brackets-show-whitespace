@@ -23,7 +23,7 @@
  */
 
 /*jslint vars: true, plusplus: true, devel: true, regexp: true, nomen: true, indent: 4, maxerr: 50 */
-/*global define, $, brackets, less, Node, CodeMirror */
+/*global define, $, brackets, Node, CodeMirror */
 
 
 define(function (require, exports, module) {
@@ -37,6 +37,7 @@ define(function (require, exports, module) {
 	var EditorManager      = brackets.getModule("editor/EditorManager");
 	var Menus              = brackets.getModule("command/Menus");
 	var PreferencesManager = brackets.getModule("preferences/PreferencesManager");
+	var ExtensionUtils     = brackets.getModule("utils/ExtensionUtils");
 
 	
 	// --- Settings ---
@@ -208,41 +209,6 @@ define(function (require, exports, module) {
 	}
 
 	
-	// --- Helper Functions ---
-	
-	/** Find the URL to this extension's directory */
-	function extensionDirUrl() {
-		var url = brackets.platform === "win" ? "file:///" : "file://localhost";
-		url += require.toUrl("./").replace(/\.\/$/, "");
-		
-		return url;
-	}
-
-	/** Loads a less file as CSS into the document */
-	function loadLessFile(file, dir) {
-		var result = $.Deferred();
-
-		// Load the Less code
-		$.get(dir + file)
-			.done(function (code) {
-				// Parse it
-				var parser = new less.Parser({ filename: file, paths: [dir] });
-				parser.parse(code, function onParse(err, tree) {
-					console.assert(!err, err);
-					// Convert it to CSS and append that to the document head
-					var $node = $("<style>").text(tree.toCSS()).appendTo(window.document.head);
-					result.resolve($node);
-				});
-			})
-			.fail(function (request, error) {
-				result.reject(error);
-			})
-		;
-		
-		return result.promise();
-	}
-
-	
 	// --- Loaders and Unloaders ---
 
 	function loadPreferences() {
@@ -251,7 +217,7 @@ define(function (require, exports, module) {
 
 
 	function loadStyle() {
-		loadLessFile("main.less", extensionDirUrl()).done(function ($node) {
+		ExtensionUtils.loadStyleSheet(module, "main.less").done(function ($node) {
 			_$styleTag = $node;
 		});
 	}
