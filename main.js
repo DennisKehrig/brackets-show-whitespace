@@ -34,6 +34,7 @@ define(function (require, exports, module) {
 
 	var Commands           = brackets.getModule("command/Commands");
 	var CommandManager     = brackets.getModule("command/CommandManager");
+	var DocumentManager    = brackets.getModule("document/DocumentManager");
 	var EditorManager      = brackets.getModule("editor/EditorManager");
 	var Menus              = brackets.getModule("command/Menus");
 	var PreferencesManager = brackets.getModule("preferences/PreferencesManager");
@@ -257,18 +258,29 @@ define(function (require, exports, module) {
 		// Not implemented
 		// Menus.getMenu("view-menu").removeMenuItem(commandId);
 	}
+	
+	
+	function loadDocumentSync() {
+		$(DocumentManager).on("currentDocumentChange", refreshCodeMirror);
+	}
 
+	function unloadDocumentSync() {
+		$(DocumentManager).off("currentDocumentChange", refreshCodeMirror);
+	}
 
+	
 	// Setup the UI
 	function load() {
 		loadPreferences();
 		loadStyle();
 		loadCommand();
 		loadMenuItem();
+		loadDocumentSync();
 	}
 
 	// Tear down the UI
 	function unload() {
+		unloadDocumentSync();
 		unloadMenuItem();
 		unloadCommand();
 		unloadStyle();
