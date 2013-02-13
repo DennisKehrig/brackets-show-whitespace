@@ -28,6 +28,11 @@
 
 define(function (require, exports, module) {
 	"use strict";
+	
+	if (CodeMirror.version && CodeMirror.version.slice(0, 1) !== "2") {
+		console.log("[ShowWhitespace] CodeMirror 2 required, you are using " + CodeMirror.version);
+		return;
+	}
 
 	
 	// --- Required modules ---
