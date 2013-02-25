@@ -23,7 +23,7 @@
  */
 
 .CodeMirror {
-	.cm-space.dk-leading, .cm-tab.dk-leading, .cm-space.dk-normal, .cm-tab.dk-normal {
+	.cm-dk-whitespace-space, .cm-dk-whitespace-tab {
 		position: relative;
 		&:before {
 			content: "";
@@ -35,7 +35,7 @@
 			height: 0.2ex;
 		}
 	}
-	.cm-space.dk-leading:before, .cm-space.dk-normal:before {
+	.cm-dk-whitespace-space:before {
 		left: 50%;
 		width:        0.2ex;
 		margin-left: -0.1ex;
@@ -43,17 +43,14 @@
 		min-width:  2px;
 		min-height: 2px;
 	}
-	.cm-tab.dk-leading:before, .cm-tab.dk-normal:before {
+	.cm-dk-whitespace-tab:before {
 		left: 0.2ex;
 		right: 0.2ex;
 
 		min-width:  2px;
 		min-height: 1px;
 	}
-	.cm-space.dk-leading:before, .cm-tab.dk-leading:before {
-		background-color: #ccc;
-	}
-	.cm-space.dk-normal:before, .cm-tab.dk-normal:before {
+	.cm-dk-whitespace-space:before, .cm-dk-whitespace-tab:before {
 		background-color: #ccc;
 	}
 }
