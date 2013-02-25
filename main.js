@@ -57,8 +57,10 @@ define(function (require, exports, module) {
     var _Line;
     var _LineGetHTML;
 
-    // State for the overlay mode, which is supposed to be stateless and so can't use the state functionality provided by CodeMirror
-    var _appendSpace = false;
+    // States for the overlay mode, which is supposed to be stateless and so can't use the state functionality provided by CodeMirror
+    var _appendSpace    = false,
+        _isLeading      = true,
+        _isTrailing     = false;
     
     
     // --- Functionality ---
@@ -66,7 +68,15 @@ define(function (require, exports, module) {
     var overlay = {
         token: function (stream, state) {
             var ch,
-                ateCode = false;
+                ateCode     = false,
+                lookAhead   = "",
+                numChars    = 0,
+                tokenStyle  = "";
+
+            if (stream.sol()) {
+                _isLeading  = true;
+                _isTrailing = false;
+            }
             
             // Boolean makes JSLint happy
             while (Boolean(ch = stream.peek())) {
@@ -77,15 +87,39 @@ define(function (require, exports, module) {
                     }
                     // Eat the whitespace
                     stream.next();
+
+                    // Test if this is a trailing whitespace
+                    if ((!_isLeading) && (!_isTrailing)) {
+                        lookAhead = stream.peek();
+                        
+                        while (lookAhead === " " || lookAhead === "\t") {
+                            stream.next();
+                            numChars++;
+                            lookAhead = stream.peek();
+                        }
+                        
+                        _isTrailing = !Boolean(lookAhead);
+                        
+                        // Restore the stream position
+                        stream.backUp(numChars);
+                    }
+
                     // CodeMirror merges consecutive tokens with the same style
                     // There's a setting called "flattenSpans" to prevent that, but it's for the whole editor
                     // So instead we simply append a space character to the style every other time
                     // This disables CodeMirror's string comparison while having no effect on the CSS class
                     _appendSpace = !_appendSpace;
-                    return "dk-whitespace-" + (ch === " " ? "space" : "tab") + (_appendSpace ? " " : "");
+                    
+                    tokenStyle  += "dk-whitespace-";
+                    tokenStyle  += (_isLeading ? "leading-" : (_isTrailing ? "trailing-" : ""));
+                    tokenStyle  += (ch === " " ? "space" : "tab");
+                    tokenStyle  += (_appendSpace ? " " : "");
+                    
+                    return tokenStyle;
                 } else {
                     stream.next();
-                    ateCode = true;
+                    ateCode     = true;
+                    _isLeading  = false;
                 }
             }
             return null;
