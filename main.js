@@ -32,7 +32,6 @@ define(function (require, exports, module) {
     // --- Required modules ---
 
     var CommandManager     = brackets.getModule("command/CommandManager");
-    var DocumentManager    = brackets.getModule("document/DocumentManager");
     var EditorManager      = brackets.getModule("editor/EditorManager");
     var ExtensionUtils     = brackets.getModule("utils/ExtensionUtils");
     var Menus              = brackets.getModule("command/Menus");
@@ -48,83 +47,84 @@ define(function (require, exports, module) {
     
     // --- State Variables ---
     
-    var _preferences;
-    var _command;
-    var _styleTag;
+    var _preferences,
+        _command,
+        _styleTag,
+        _Line,
+        _LineGetHTML;
 
-    // CodeMirror 2 doesn't have addOverlay, and doesn't set a version either.
-    var _useLegacyVersion = !CodeMirror.version;
-    var _Line;
-    var _LineGetHTML;
-
-    // States for the overlay mode, which is supposed to be stateless and so can't use the state functionality provided by CodeMirror
-    var _appendSpace    = false,
-        _isLeading      = true,
-        _isTrailing     = false;
-    
     
     // --- Functionality ---
 
-    var overlay = {
-        token: function (stream, state) {
-            var ch,
-                ateCode     = false,
-                lookAhead   = "",
-                numChars    = 0,
-                tokenStyle  = "";
-
-            if (stream.sol()) {
-                _isLeading  = true;
-                _isTrailing = false;
-            }
-            
-            // Boolean makes JSLint happy
-            while (Boolean(ch = stream.peek())) {
-                if (ch === " " || ch === "\t") {
-                    if (ateCode) {
-                        // Return now to mark all code seen so far as not necessary to highlight
-                        return null;
+    /**
+     * Create a new overlay mode that encapsulates its own state in a closure.
+     * Such a mode can only be used once at a time because the shared state would create conflicts otherwise.
+     */
+    function _makeOverlay() {
+        // States for the overlay mode, which is supposed to be stateless and so can't use the state functionality provided by CodeMirror
+        var _appendSpace    = false,
+            _isLeading      = true,
+            _isTrailing     = false,
+            _trailingOffset = null;
+        
+        return {
+            token: function (stream, state) {
+                var ch,
+                    trailing,
+                    ateCode     = false,
+                    tokenStyle  = "";
+                
+                // Start of line: reset state
+                if (stream.sol()) {
+                    _isLeading  = true;
+                    _isTrailing = false;
+                    
+                    _trailingOffset = stream.string.length;
+                    trailing = stream.string.match(/[ \t]+$/);
+                    if (trailing) {
+                        _trailingOffset -= trailing[0].length;
                     }
-                    // Eat the whitespace
-                    stream.next();
-
-                    // Test if this is a trailing whitespace
-                    if ((!_isLeading) && (!_isTrailing)) {
-                        lookAhead = stream.peek();
+                }
+                
+                // Peek ahead one character at a time
+                // Wrapping the assignment in a Boolean makes JSLint happy
+                while (Boolean(ch = stream.peek())) {
+                    if (ch === " " || ch === "\t") {
+                        if (ateCode) {
+                            // Return now to mark all code seen so far as not necessary to highlight
+                            return null;
+                        }
+                        // Eat the whitespace
+                        stream.next();
                         
-                        while (lookAhead === " " || lookAhead === "\t") {
-                            stream.next();
-                            numChars++;
-                            lookAhead = stream.peek();
+                        // Test if this is a trailing whitespace
+                        if (!_isLeading && !_isTrailing) {
+                            _isTrailing = stream.pos >= _trailingOffset;
                         }
                         
-                        _isTrailing = !Boolean(lookAhead);
+                        // CodeMirror merges consecutive tokens with the same style
+                        // There's a setting called "flattenSpans" to prevent that, but it's for the whole editor*
+                        // So instead we simply append a space character to the style every other time
+                        // This disables CodeMirror's string comparison while having no effect on the CSS class
+                        // *changed in https://github.com/marijnh/CodeMirror/commit/221a1e4070d503f4597f7823e4f2cf68ba884cdf
+                        _appendSpace = !_appendSpace;
                         
-                        // Restore the stream position
-                        stream.backUp(numChars);
+                        tokenStyle  += "dk-whitespace-";
+                        tokenStyle  += (_isLeading ? "leading-" : (_isTrailing ? "trailing-" : ""));
+                        tokenStyle  += (ch === " " ? "space" : "tab");
+                        tokenStyle  += (_appendSpace ? " " : "");
+                        
+                        return tokenStyle;
+                    } else {
+                        stream.next();
+                        ateCode     = true;
+                        _isLeading  = false;
                     }
-
-                    // CodeMirror merges consecutive tokens with the same style
-                    // There's a setting called "flattenSpans" to prevent that, but it's for the whole editor
-                    // So instead we simply append a space character to the style every other time
-                    // This disables CodeMirror's string comparison while having no effect on the CSS class
-                    _appendSpace = !_appendSpace;
-                    
-                    tokenStyle  += "dk-whitespace-";
-                    tokenStyle  += (_isLeading ? "leading-" : (_isTrailing ? "trailing-" : ""));
-                    tokenStyle  += (ch === " " ? "space" : "tab");
-                    tokenStyle  += (_appendSpace ? " " : "");
-                    
-                    return tokenStyle;
-                } else {
-                    stream.next();
-                    ateCode     = true;
-                    _isLeading  = false;
                 }
+                return null;
             }
-            return null;
-        }
-    };
+        };
+    }
         
     function patchCodeMirror(codeMirror) {
         // Avoid double patching
@@ -216,28 +216,51 @@ define(function (require, exports, module) {
             _Line = null;
         }
     }
-
-    function refreshCodeMirror() {
-        var fullEditor = EditorManager.getCurrentFullEditor();
-        if (!fullEditor || !fullEditor._codeMirror) { return; }
-
-        if (_useLegacyVersion) {
-            if (_command.getChecked()) {
-                patchCodeMirror(fullEditor._codeMirror);
-            } else {
-                unpatchCodeMirror();
-            }
-            
-            fullEditor._codeMirror.refresh();
-            $.each(EditorManager.getInlineEditors(fullEditor), function (index, inlineEditor) {
-                inlineEditor._codeMirror.refresh();
-            });
-        } else {
-            fullEditor._codeMirror.removeOverlay(overlay);
-            if (_command.getChecked()) {
-                fullEditor._codeMirror.addOverlay(overlay);
-            }
+    
+    function updateEditorViaOverlay(editor) {
+        var codeMirror = editor._codeMirror;
+        if (!codeMirror) { return; }
+        
+        var showWhitespace = _command.getChecked();
+        
+        if (!showWhitespace && codeMirror._dkShowWhitespaceOverlay) {
+            codeMirror.removeOverlay(codeMirror._dkShowWhitespaceOverlay);
+            delete codeMirror._dkShowWhitespaceOverlay;
         }
+        
+        if (showWhitespace && !codeMirror._dkShowWhitespaceOverlay) {
+            codeMirror._dkShowWhitespaceOverlay = _makeOverlay();
+            codeMirror.addOverlay(codeMirror._dkShowWhitespaceOverlay);
+        }
+    }
+    
+    // CodeMirror 2 version
+    function updateEditorViaPatch(editor) {
+        var codeMirror = editor._codeMirror;
+        if (!codeMirror) { return; }
+        
+        if (_command.getChecked()) {
+            patchCodeMirror(codeMirror);
+        } else {
+            unpatchCodeMirror();
+        }
+        codeMirror.refresh();
+    }
+    
+    function updateEditors(includeEditor) {
+        var fullEditor = EditorManager.getCurrentFullEditor();
+        if (!fullEditor) { return; }
+        
+        var editors = [fullEditor].concat(EditorManager.getInlineEditors(fullEditor));
+        
+        // activeEditorChange fires before a just opened inline editor would be listed by getInlineEditors
+        // So we include it manually
+        if (includeEditor && editors.indexOf(includeEditor) === -1) {
+            editors.push(includeEditor);
+        }
+        
+        // CodeMirror 2 doesn't set a version and doesn't feature addOverlay yet, so we use a different strategy
+        editors.forEach(CodeMirror.version ? updateEditorViaOverlay : updateEditorViaPatch);
     }
     
     // --- Event Handlers ---
@@ -252,9 +275,14 @@ define(function (require, exports, module) {
 
     function onCheckedStateChange() {
         _preferences.setValue("checked", Boolean(_command.getChecked()));
-        refreshCodeMirror();
+        updateEditors();
+    }
+    
+    function onActiveEditorChange(e, editor) {
+        updateEditors(editor);
     }
 
+    
     // --- Loaders and Unloaders ---
 
     function loadPreferences() {
@@ -304,12 +332,12 @@ define(function (require, exports, module) {
     }
     
     
-    function loadDocumentSync() {
-        $(DocumentManager).on("currentDocumentChange", refreshCodeMirror);
+    function loadEditorSync() {
+        $(EditorManager).on("activeEditorChange", onActiveEditorChange);
     }
 
-    function unloadDocumentSync() {
-        $(DocumentManager).off("currentDocumentChange", refreshCodeMirror);
+    function unloadEditorSync() {
+        $(EditorManager).off("activeEditorChange", onActiveEditorChange);
     }
 
     
@@ -319,12 +347,12 @@ define(function (require, exports, module) {
         loadStyle();
         loadCommand();
         loadMenuItem();
-        loadDocumentSync();
+        loadEditorSync();
     }
 
     // Tear down the UI
     function unload() {
-        unloadDocumentSync();
+        unloadEditorSync();
         unloadMenuItem();
         unloadCommand();
         unloadStyle();
