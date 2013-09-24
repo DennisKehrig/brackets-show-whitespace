@@ -1,0 +1,15 @@
+{
+    "name": "dkehrig.show-whitespace",
+    "title": "Show Whitespace",
+    "description": "Visualizes whitespace similar to how Sublime Text does it",
+    "homepage": "https://github.com/DennisKehrig/brackets-show-whitespace",
+    "version": "2.0.0",
+    "author": "Dennis Kehrig <mailgithub@denniskehrig.de> (https://github.com/DennisKehrig)",
+    "contributors": [
+        "Lance Campbell <lkcampbell@gmail.com> (https://github.com/lkcampbell)"
+    ],
+    "license": "MIT",
+    "engines": {
+        "brackets": ">=0.31.0"
+    }
+}
