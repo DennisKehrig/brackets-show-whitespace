@@ -23,7 +23,7 @@
  */
 
 /*jslint vars: true, plusplus: true, devel: true, regexp: true, nomen: true, indent: 4, maxerr: 50 */
-/*global define, $, brackets, Node, CodeMirror */
+/*global define, $, brackets */
 
 define(function (require, exports, module) {
     "use strict";
@@ -36,6 +36,9 @@ define(function (require, exports, module) {
     var ExtensionUtils     = brackets.getModule("utils/ExtensionUtils");
     var Menus              = brackets.getModule("command/Menus");
     var PreferencesManager = brackets.getModule("preferences/PreferencesManager");
+    
+    // Support for Brackets Sprint 38+ : https://github.com/adobe/brackets/wiki/Brackets-CodeMirror-v4-Migration-Guide
+    var CodeMirror = brackets.getModule("thirdparty/CodeMirror2/lib/codemirror");
 
     
     // --- Settings ---
