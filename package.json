@@ -3,7 +3,7 @@
     "title": "Show Whitespace",
     "description": "Visualizes whitespace similar to how Sublime Text does it",
     "homepage": "https://github.com/DennisKehrig/brackets-show-whitespace",
-    "version": "2.0.0",
+    "version": "2.0.1",
     "author": "Dennis Kehrig <mailgithub@denniskehrig.de> (https://github.com/DennisKehrig)",
     "contributors": [
         "Lance Campbell <lkcampbell@gmail.com> (https://github.com/lkcampbell)"

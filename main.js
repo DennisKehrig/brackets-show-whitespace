@@ -45,7 +45,7 @@ define(function (require, exports, module) {
     
     var commandId          = "denniskehrig.ShowWhitespace.toggle";
     var preferencesId      = "denniskehrig.ShowWhitespace";
-    var defaultPreferences = { checked: false };
+    var defaultPreferences = { checked: true };
 
     
     // --- State Variables ---
@@ -277,7 +277,7 @@ define(function (require, exports, module) {
     }
 
     function onCheckedStateChange() {
-        _preferences.setValue("checked", Boolean(_command.getChecked()));
+        _preferences.set("checked", Boolean(_command.getChecked()));
         updateEditors();
     }
     
@@ -289,7 +289,8 @@ define(function (require, exports, module) {
     // --- Loaders and Unloaders ---
 
     function loadPreferences() {
-        _preferences = PreferencesManager.getPreferenceStorage(preferencesId, defaultPreferences);
+        _preferences = PreferencesManager.getExtensionPrefs(preferencesId);
+        _preferences.definePreference("checked", "boolean", defaultPreferences["checked"]);
     }
 
 
@@ -316,7 +317,7 @@ define(function (require, exports, module) {
         $(_command).on("checkedStateChange", onCheckedStateChange);
         
         // Apply preferences
-        _command.setChecked(_preferences.getValue("checked"));
+        _command.setChecked(_preferences.get("checked"));
     }
 
     function unloadCommand() {
