@@ -23,7 +23,7 @@
  */
 
 /*jslint vars: true, plusplus: true, devel: true, regexp: true, nomen: true, indent: 4, maxerr: 50 */
-/*global define, $, brackets */
+/*global define, $, brackets, setTimeout */
 
 define(function (require, exports, module) {
     "use strict";
@@ -45,7 +45,13 @@ define(function (require, exports, module) {
     
     var commandId          = "denniskehrig.ShowWhitespace.toggle";
     var preferencesId      = "denniskehrig.ShowWhitespace";
-    var defaultPreferences = { checked: true };
+    var defaultPreferences = {
+        checked: true,
+        colors: {
+            light: ["#ccc", "#ff0000"],
+            dark: ["#686963", "#ff0000"]
+        }
+    };
 
     
     // --- State Variables ---
@@ -53,6 +59,7 @@ define(function (require, exports, module) {
     var _preferences,
         _command,
         _styleTag,
+        _styleInline,
         _Line,
         _LineGetHTML;
 
@@ -220,6 +227,28 @@ define(function (require, exports, module) {
         }
     }
     
+    function _applyColors() {
+        // Slight delay so Brackets can apply the dark class
+        setTimeout(function() {
+            var userColors = _preferences.get("colors"),
+                toApply    = $("body").hasClass("dark") ? userColors.dark : userColors.light,
+                css        = ".CodeMirror .cm-dk-whitespace-space:before," +
+                             ".CodeMirror .cm-dk-whitespace-tab:before," +
+                             ".CodeMirror .cm-dk-whitespace-leading-space:before,"  +
+                             ".CodeMirror .cm-dk-whitespace-leading-tab:before" +
+                             "{background-color:" + toApply[0] + ";} " +
+                             ".CodeMirror .cm-dk-whitespace-trailing-space:before, "  +
+                             ".CodeMirror .cm-dk-whitespace-trailing-tab:before" +
+                             "{background-color:" + toApply[1] + ";} ";
+
+            if (!_styleInline) {
+                _styleInline = ExtensionUtils.addEmbeddedStyleSheet(css);
+            } else {
+                $(_styleInline).text(css);
+            }
+        }, 100);
+    }
+    
     function updateEditorViaOverlay(editor) {
         var codeMirror = editor._codeMirror;
         if (!codeMirror) { return; }
@@ -278,19 +307,28 @@ define(function (require, exports, module) {
 
     function onCheckedStateChange() {
         _preferences.set("checked", Boolean(_command.getChecked()));
+        _preferences.set("colors", _preferences.get("colors"));
         updateEditors();
     }
     
     function onActiveEditorChange(e, editor) {
         updateEditors(editor);
     }
-
+    
+    function updateColors(e, data) {
+        if (data.ids.indexOf("theme") > -1 || data.ids.indexOf("colors") > -1) {
+            _applyColors();
+        }
+    }
     
     // --- Loaders and Unloaders ---
 
     function loadPreferences() {
         _preferences = PreferencesManager.getExtensionPrefs(preferencesId);
         _preferences.definePreference("checked", "boolean", defaultPreferences["checked"]);
+        _preferences.definePreference("colors", "Object", defaultPreferences["colors"]);
+        _preferences.on("change", updateColors);
+        PreferencesManager.getExtensionPrefs("themes").on("change", updateColors);
     }
 
 
@@ -318,6 +356,7 @@ define(function (require, exports, module) {
         
         // Apply preferences
         _command.setChecked(_preferences.get("checked"));
+        _command.setChecked(_preferences.get("colors"));
     }
 
     function unloadCommand() {
