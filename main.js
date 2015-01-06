@@ -88,8 +88,8 @@ define(function (require, exports, module) {
                     trailing = stream.string.match(/[ \t]+$/);
                     if (trailing) {
                         _trailingOffset -= trailing[0].length;
-                        // everything is whitespace
-                        if(_trailingOffset == 0) {
+                        // Everything is whitespace
+                        if (_trailingOffset === 0) {
                             _isEmptyLine = true;
                         }
                     }
