@@ -36,8 +36,6 @@ define(function (require, exports, module) {
     var ExtensionUtils     = brackets.getModule("utils/ExtensionUtils");
     var Menus              = brackets.getModule("command/Menus");
     var PreferencesManager = brackets.getModule("preferences/PreferencesManager");
-    
-    // Support for Brackets Sprint 38+ : https://github.com/adobe/brackets/wiki/Brackets-CodeMirror-v4-Migration-Guide
     var CodeMirror = brackets.getModule("thirdparty/CodeMirror2/lib/codemirror");
 
     
@@ -128,97 +126,6 @@ define(function (require, exports, module) {
             }
         };
     }
-        
-    function patchCodeMirror(codeMirror) {
-        // Avoid double patching
-        if (_Line && _LineGetHTML) { return; }
-
-        // Remember Line and Line.getHTML to be able to unpatch without a reference to CM
-        _Line = Object.getPrototypeOf(codeMirror.getLineHandle(0));
-        _LineGetHTML = _Line.getHTML;
-
-        // Constants
-        var TAG_CLOSE = "</span>";
-        var CM_TAB    = "<span class=\"cm-tab\">";
-        var TAB       = "<span class=\"cm-tab cm-dk-whitespace-tab\">";
-        var SPACE     = "<span class=\"cm-space cm-dk-whitespace-space\">";
-
-        // Closure to make our getHTML independent of this extension
-        var _super = _Line.getHTML;
-        _Line.getHTML = function getHTML(makeTab, wrapAt, wrapId, wrapWBR) {
-            var html = _super.apply(this, arguments);
-            
-            // Nothing to do
-            if (!_command || !_command.getChecked() || !this.text) { return html; }
-            
-            // Local variables for the loop
-            var pos, part;
-            
-            // Optimizations
-            var length = html.length;
-            
-            // Output
-            var output = [];
-            
-            // State
-            var offset = 0;
-            var tags   = [];
-            
-            while (offset < length) {
-                if (html.slice(offset, offset + 1) === "<") {
-                    // Tag mode
-                    
-                    // Look for the end of the tag
-                    pos  = html.indexOf(">", offset + 1);
-                    part = html.slice(offset, pos + 1);
-                    
-                    // Update the state
-                    offset = pos + 1;
-                    if (part.slice(1, 2) === "/") {
-                        tags.pop();
-                    } else {
-                        tags.push(part);
-                    }
-                    
-                    if (part === CM_TAB) { part = TAB; }
-                } else {
-                    // Text mode
-                    
-                    // Look for the start of a tag
-                    pos = html.indexOf("<", offset);
-                    // The entire rest of the string is escaped text
-                    if (pos === -1) { pos = length + 1; }
-                    part = html.slice(offset, pos);
-                    
-                    // Update the state
-                    offset = pos;
-                    
-                    // Leave the spaces in tabs as they are
-                    if (tags[tags.length - 1] !== CM_TAB) {
-                        // Mark the spaces appropriately
-                        part = part.replace(/ /g, SPACE + " " + TAG_CLOSE);
-                    }
-                }
-                
-                // No need to handle empty strings
-                if (part !== "") {
-                    // Add the part to the output
-                    output.push(part);
-                }
-            }
-            
-            output = output.join("");
-            return output;
-        };
-    }
-
-    function unpatchCodeMirror() {
-        if (_Line && _LineGetHTML) {
-            _Line.getHTML = _LineGetHTML;
-            _LineGetHTML = null;
-            _Line = null;
-        }
-    }
     
     function updateEditorViaOverlay(editor) {
         var codeMirror = editor._codeMirror;
@@ -237,19 +144,6 @@ define(function (require, exports, module) {
         }
     }
     
-    // CodeMirror 2 version
-    function updateEditorViaPatch(editor) {
-        var codeMirror = editor._codeMirror;
-        if (!codeMirror) { return; }
-        
-        if (_command.getChecked()) {
-            patchCodeMirror(codeMirror);
-        } else {
-            unpatchCodeMirror();
-        }
-        codeMirror.refresh();
-    }
-    
     function updateEditors(includeEditor) {
         var fullEditor = EditorManager.getCurrentFullEditor();
         if (!fullEditor) { return; }
@@ -262,8 +156,7 @@ define(function (require, exports, module) {
             editors.push(includeEditor);
         }
         
-        // CodeMirror 2 doesn't set a version and doesn't feature addOverlay yet, so we use a different strategy
-        editors.forEach(CodeMirror.version ? updateEditorViaOverlay : updateEditorViaPatch);
+        editors.forEach(updateEditorViaOverlay);
     }
     
     // --- Event Handlers ---
