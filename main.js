@@ -66,6 +66,7 @@ define(function (require, exports, module) {
         var _appendSpace    = false,
             _isLeading      = true,
             _isTrailing     = false,
+            _isEmptyLine    = false,
             _trailingOffset = null;
         
         return {
@@ -79,11 +80,16 @@ define(function (require, exports, module) {
                 if (stream.sol()) {
                     _isLeading  = true;
                     _isTrailing = false;
+                    _isEmptyLine = false;
                     
                     _trailingOffset = stream.string.length;
                     trailing = stream.string.match(/[ \t]+$/);
                     if (trailing) {
                         _trailingOffset -= trailing[0].length;
+                        // Everything is whitespace
+                        if (_trailingOffset === 0) {
+                            _isEmptyLine = true;
+                        }
                     }
                 }
                 
@@ -111,7 +117,7 @@ define(function (require, exports, module) {
                         _appendSpace = !_appendSpace;
                         
                         tokenStyle  += "dk-whitespace-";
-                        tokenStyle  += (_isLeading ? "leading-" : (_isTrailing ? "trailing-" : ""));
+                        tokenStyle  += (_isEmptyLine ? "empty-line-" : (_isLeading ? "leading-" : (_isTrailing ? "trailing-" : "")));
                         tokenStyle  += (ch === " " ? "space" : "tab");
                         tokenStyle  += (_appendSpace ? " " : "");
                         
