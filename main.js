@@ -213,7 +213,7 @@ define(function (require, exports, module) {
             _command._commandFn = onCommandExecuted;
         }
 
-        $(_command).on("checkedStateChange", onCheckedStateChange);
+        _command.on("checkedStateChange", onCheckedStateChange);
         
         // Apply preferences
         _command.setChecked(_preferences.get("checked"));
@@ -221,7 +221,7 @@ define(function (require, exports, module) {
 
     function unloadCommand() {
         _command.setChecked(false);
-        $(_command).off("checkedStateChange", onCheckedStateChange);
+        _command.off("checkedStateChange", onCheckedStateChange);
         _command._commandFn = null;
     }
 
@@ -236,11 +236,11 @@ define(function (require, exports, module) {
     
     
     function loadEditorSync() {
-        $(EditorManager).on("activeEditorChange", onActiveEditorChange);
+        EditorManager.on("activeEditorChange", onActiveEditorChange);
     }
 
     function unloadEditorSync() {
-        $(EditorManager).off("activeEditorChange", onActiveEditorChange);
+        EditorManager.off("activeEditorChange", onActiveEditorChange);
     }
 
     
