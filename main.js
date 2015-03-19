@@ -69,7 +69,8 @@ define(function (require, exports, module) {
     var _preferences,
         _command,
         _styleTag,
-        _styleInline;
+        _styleInline,
+        _styleInlineTemplate;
 
     
     // --- Functionality ---
@@ -152,15 +153,10 @@ define(function (require, exports, module) {
     
     /**
      * Apply the whitespace colors.
-     * This does not overwrite styles already defined by a theme.
+     * This does NOT overwrite styles already defined by a theme.
      */
     function _applyColors() {
-        // Compile the CSS from the template
-        var template = _.template(stylesTemplate),
-            compiled = template(_preferences.get("colors"));
-
-        // Update the styling with the changes
-        _styleInline.text(compiled);
+        _styleInline.text(_styleInlineTemplate(_preferences.get("colors")));
     }
 
     function updateEditorViaOverlay(editor) {
@@ -205,7 +201,7 @@ define(function (require, exports, module) {
         }
     }
 
-    function onCheckedStateChange(e) {
+    function onCheckedStateChange() {
         _preferences.set("checked", _command.getChecked());
         _preferences.set("colors", _preferences.get("colors"));
         updateEditors();
@@ -246,6 +242,7 @@ define(function (require, exports, module) {
             _styleTag = node;
         });
         _styleInline = $(ExtensionUtils.addEmbeddedStyleSheet(""));
+        _styleInlineTemplate = _.template(stylesTemplate);
         _applyColors();
     }
 
