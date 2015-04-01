@@ -1,32 +1,31 @@
-# Show Whitespace in Brackets
+# Show Whitespace
 
-[Brackets](http://brackets.io/) extension to visualize whitespace (spaces and tabs) like [Sublime Text](http://www.sublimetext.com/) does. Adds an entry called "Show Whitespace" to the View menu, the shortcut is Command-Shift-W (or Ctrl-Shift-W on Windows). The state is remembered next time you start Brackets.
+> A [Brackets](http://brackets.io/) extension to visualize whitespace (both spaces and tabs) in the same style as [Sublime Text](http://www.sublimetext.com/).
 
-This extension overwrites `Line.getHTML` (part of [CodeMirror](http://codemirror.net/)) and modifies its output. Spaces in the indentation are wrapped as `<span class="cm-space dk-leading"> </span>`, normal spaces as `<span class="cm-space dk-normal"> </span>`. CodeMirror itself already handles tabs similarly, this extension turns those into `<span class="cm-tab dk-leading"> </span>` if they are part of the whitespace starting a line and `<span class="cm-tab dk-normal"> </span>` otherwise.
+## Usage
 
-The styles are defined in `main.less` which is compiled to CSS and loaded into Brackets when loading the extension.
+Activate using `View > Show Whitespace` or by using the shortcut `Ctrl-Shift-W` (`Command-Shift-W` on Mac OS X). The extension state is remembered across Brackets launches. Whitespace in all editor windows are visualized, including inline editors.
 
-Whitespace in inline editors is visualized as well.
+## Technical Details
 
+This extension uses [CodeMirror](http://codemirror.net/) overlays to construct and render whitespace for both spaces and tabs. Each individual character is wrapped in a `<span></span>` with an appropriate denoting class. The following are all the classes this extension uses and their purpose. Do note that tabs follow this same structure, with the word `space` replaced with `tab`.
+
+* `.cm-dk-whitespace-space`: Whitespace between any characters
+* `.cm-dk-whitespace-leading-space`: Whitespace that makes up any indentation
+* `.cm-dk-whitespace-empty-line-space`: Any lines that consist solely of whitespace
+* `.cm-dk-whitespace-trailing-space`: Whitespace at the end of a line after any characters
+
+The primary extension styling is defined in `styles/main.less`, which is compiled into CSS, while whitespace colors are defined in Brackets preferences and rendered into `styles/whitespace-colors-css.tmpl`. Both files are then loaded into Brackets on startup.
 
 ## Install
 
-Open Brackets and click Help > Show Extensions Folder
-Clone the extension into the user subdirectory:
+Method 1: Open the Brackets Extension Manager and search for "show whitespace"
 
-    git clone git://github.com/DennisKehrig/brackets-show-whitespace.git user/ShowWhitespace
+Method 2: Download the [latest revision](https://github.com/DennisKehrig/brackets-show-whitespace/archive/master.zip`) in `.zip` archive directly from GitHub and drag it onto the "Drag .zip here" area in the Extension Manager. Alternatively, use the "Install from URL..." link also in the Extension Manager.
 
+## Known Issues
 
-## Changelog
-
-### 2012-11-14
-
-Changed the name to "Show Whitespace" as all whitespace is visualized now.
-
-### 2012-06-29
-
-Instead of adding a separate `<div>` with an entry for the indentation of each line, the HTML code that CodeMirror itself produces is augmented. This makes the extension much more reliable and faster. Support for inline editors then is gratis, too - except for refresh calls when the setting is toggled.
-
+* CodeMirror overlays have a side effect of slowing down the editor in many aspects, including typing and scrolling. If the slowdown is too unbearable, it may be worthwhile to disable the extension except when required.
 
 ## Brackets Wishlist
 
@@ -35,14 +34,6 @@ What I wish Brackets would provide:
 - An API to remove a command
 - An API to remove a menu item
 
-
 ## License
 
-The MIT License (MIT)
-Copyright (c) 2012 Dennis Kehrig. All rights reserved.
- 
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
- 
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
- 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+[MIT](LICENSE)
