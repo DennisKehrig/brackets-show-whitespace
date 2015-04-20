@@ -27,8 +27,8 @@
 
 define(function (require, exports, module) {
     "use strict";
-    
-    
+
+
     // --- Required modules ---
 
     var _                  = brackets.getModule("thirdparty/lodash"),
@@ -40,9 +40,11 @@ define(function (require, exports, module) {
         PreferencesManager = brackets.getModule("preferences/PreferencesManager"),
         stylesTemplate     = require("text!styles/whitespace-colors-css.tmpl");
 
-    
+    var Strings            = require("strings");
+
+
     // --- Settings ---
-    
+
     var commandId          = "denniskehrig.ShowWhitespace.toggle";
     var preferencesId      = "denniskehrig.ShowWhitespace";
     var defaultPreferences = {
@@ -63,16 +65,16 @@ define(function (require, exports, module) {
         }
     };
 
-    
+
     // --- State Variables ---
-    
+
     var _preferences,
         _command,
         _styleTag,
         _styleInline,
         _styleInlineTemplate;
 
-    
+
     // --- Functionality ---
 
     /**
@@ -86,20 +88,20 @@ define(function (require, exports, module) {
             _isTrailing     = false,
             _isEmptyLine    = false,
             _trailingOffset = null;
-        
+
         return {
             token: function (stream, state) {
                 var ch,
                     trailing,
                     ateCode     = false,
                     tokenStyle  = "";
-                
+
                 // Start of line: reset state
                 if (stream.sol()) {
                     _isLeading  = true;
                     _isTrailing = false;
                     _isEmptyLine = false;
-                    
+
                     _trailingOffset = stream.string.length;
                     trailing = stream.string.match(/[ \t]+$/);
                     if (trailing) {
@@ -110,7 +112,7 @@ define(function (require, exports, module) {
                         }
                     }
                 }
-                
+
                 // Peek ahead one character at a time
                 // Wrapping the assignment in a Boolean makes JSLint happy
                 while (Boolean(ch = stream.peek())) {
@@ -121,24 +123,24 @@ define(function (require, exports, module) {
                         }
                         // Eat the whitespace
                         stream.next();
-                        
+
                         // Test if this is a trailing whitespace
                         if (!_isLeading && !_isTrailing) {
                             _isTrailing = stream.pos >= _trailingOffset;
                         }
-                        
+
                         // CodeMirror merges consecutive tokens with the same style
                         // There's a setting called "flattenSpans" to prevent that, but it's for the whole editor*
                         // So instead we simply append a space character to the style every other time
                         // This disables CodeMirror's string comparison while having no effect on the CSS class
                         // *changed in https://github.com/marijnh/CodeMirror/commit/221a1e4070d503f4597f7823e4f2cf68ba884cdf
                         _appendSpace = !_appendSpace;
-                        
+
                         tokenStyle  += "dk-whitespace-";
                         tokenStyle  += (_isEmptyLine ? "empty-line-" : (_isLeading ? "leading-" : (_isTrailing ? "trailing-" : "")));
                         tokenStyle  += (ch === " " ? "space" : "tab");
                         tokenStyle  += (_appendSpace ? " " : "");
-                        
+
                         return tokenStyle;
                     } else {
                         stream.next();
@@ -150,7 +152,7 @@ define(function (require, exports, module) {
             }
         };
     }
-    
+
     /**
      * Apply the whitespace colors.
      * This does NOT overwrite styles already defined by a theme.
@@ -162,35 +164,35 @@ define(function (require, exports, module) {
     function updateEditorViaOverlay(editor) {
         var codeMirror = editor._codeMirror;
         if (!codeMirror) { return; }
-        
+
         var showWhitespace = _command.getChecked();
-        
+
         if (!showWhitespace && codeMirror._dkShowWhitespaceOverlay) {
             codeMirror.removeOverlay(codeMirror._dkShowWhitespaceOverlay);
             delete codeMirror._dkShowWhitespaceOverlay;
         }
-        
+
         if (showWhitespace && !codeMirror._dkShowWhitespaceOverlay) {
             codeMirror._dkShowWhitespaceOverlay = _makeOverlay();
             codeMirror.addOverlay(codeMirror._dkShowWhitespaceOverlay);
         }
     }
-    
+
     function updateEditors(includeEditor) {
         var fullEditor = EditorManager.getCurrentFullEditor();
         if (!fullEditor) { return; }
-        
+
         var editors = [fullEditor].concat(EditorManager.getInlineEditors(fullEditor));
-        
+
         // activeEditorChange fires before a just opened inline editor would be listed by getInlineEditors
         // So we include it manually
         if (includeEditor && editors.indexOf(includeEditor) === -1) {
             editors.push(includeEditor);
         }
-        
+
         editors.forEach(updateEditorViaOverlay);
     }
-    
+
     // --- Event Handlers ---
 
     function onCommandExecuted() {
@@ -206,7 +208,7 @@ define(function (require, exports, module) {
         _preferences.set("colors", _preferences.get("colors"));
         updateEditors();
     }
-    
+
     function onActiveEditorChange(e, editor) {
         updateEditors(editor);
     }
@@ -217,7 +219,7 @@ define(function (require, exports, module) {
         }
     }
 
-    
+
     // --- Loaders and Unloaders ---
 
     function loadPreferences() {
@@ -225,12 +227,12 @@ define(function (require, exports, module) {
         _preferences.definePreference("checked", "boolean", defaultPreferences.checked);
         _preferences.definePreference("colors", "Object", defaultPreferences.colors);
     }
-  
+
     function loadPrefListeners() {
         _preferences.on("change", updateColors);
         PreferencesManager.getExtensionPrefs("themes").on("change", updateColors);
     }
-  
+
     function unloadPrefListeners() {
         _preferences.off("change", updateColors);
         PreferencesManager.getExtensionPrefs("themes").off("change", updateColors);
@@ -250,18 +252,18 @@ define(function (require, exports, module) {
         $(_styleTag).remove();
     }
 
-    
+
     function loadCommand() {
         _command = CommandManager.get(commandId);
-        
+
         if (!_command) {
-            _command = CommandManager.register("Show Whitespace", commandId, onCommandExecuted);
+            _command = CommandManager.register(Strings.CMD_TOGGLE, commandId, onCommandExecuted);
         } else {
             CommandManager.execute(commandId);
         }
 
         $(_command).on("checkedStateChange", onCheckedStateChange);
-        
+
         // Enable/disable extension based on user preference
         _command.setChecked(_preferences.get("checked"));
     }
@@ -272,7 +274,7 @@ define(function (require, exports, module) {
         _command._commandFn = null;
     }
 
-    
+
     function loadMenuItem() {
         Menus.getMenu("view-menu").addMenuItem(commandId, "Ctrl-Alt-W");
     }
@@ -280,8 +282,8 @@ define(function (require, exports, module) {
     function unloadMenuItem() {
         Menus.getMenu("view-menu").removeMenuItem(commandId);
     }
-    
-    
+
+
     function loadEditorSync() {
         $(EditorManager).on("activeEditorChange", onActiveEditorChange);
     }
@@ -290,7 +292,7 @@ define(function (require, exports, module) {
         $(EditorManager).off("activeEditorChange", onActiveEditorChange);
     }
 
-    
+
     // Setup the UI
     function load() {
         loadPreferences();
@@ -312,12 +314,12 @@ define(function (require, exports, module) {
 
 
     // --- Exports ---
-    
+
     exports.load = load;
     exports.unload = unload;
 
-    
+
     // --- Initializiation ---
-    
+
     AppInit.appReady(load);
 });
