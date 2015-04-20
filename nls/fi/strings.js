@@ -28,3 +28,5 @@
 define({
     "CMD_TOGGLE": "Näytä tyhjämerkit"
 });
+
+/* Last translated for a54ee77dfa1e062369d1858bc328b7177e2df1a8 */
