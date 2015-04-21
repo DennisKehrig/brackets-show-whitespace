@@ -41,7 +41,7 @@ define(function (require, exports, module) {
         stylesTemplate     = require("text!styles/whitespace-colors-css.tmpl"),
         Strings            = require("strings");
 
-
+    
     // --- Settings ---
     
     var commandId          = "denniskehrig.ShowWhitespace.toggle";
@@ -122,7 +122,7 @@ define(function (require, exports, module) {
                         }
                         // Eat the whitespace
                         stream.next();
-
+                        
                         // Test if this is a trailing whitespace
                         if (!_isLeading && !_isTrailing) {
                             _isTrailing = stream.pos >= _trailingOffset;
@@ -170,7 +170,7 @@ define(function (require, exports, module) {
             codeMirror.removeOverlay(codeMirror._dkShowWhitespaceOverlay);
             delete codeMirror._dkShowWhitespaceOverlay;
         }
-
+        
         if (showWhitespace && !codeMirror._dkShowWhitespaceOverlay) {
             codeMirror._dkShowWhitespaceOverlay = _makeOverlay();
             codeMirror.addOverlay(codeMirror._dkShowWhitespaceOverlay);
@@ -191,7 +191,7 @@ define(function (require, exports, module) {
         
         editors.forEach(updateEditorViaOverlay);
     }
-
+    
     // --- Event Handlers ---
 
     function onCommandExecuted() {
@@ -226,12 +226,12 @@ define(function (require, exports, module) {
         _preferences.definePreference("checked", "boolean", defaultPreferences.checked);
         _preferences.definePreference("colors", "Object", defaultPreferences.colors);
     }
-    
+  
     function loadPrefListeners() {
         _preferences.on("change", updateColors);
         PreferencesManager.getExtensionPrefs("themes").on("change", updateColors);
     }
-    
+  
     function unloadPrefListeners() {
         _preferences.off("change", updateColors);
         PreferencesManager.getExtensionPrefs("themes").off("change", updateColors);
