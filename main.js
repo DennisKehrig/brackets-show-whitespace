@@ -38,7 +38,8 @@ define(function (require, exports, module) {
         ExtensionUtils     = brackets.getModule("utils/ExtensionUtils"),
         Menus              = brackets.getModule("command/Menus"),
         PreferencesManager = brackets.getModule("preferences/PreferencesManager"),
-        stylesTemplate     = require("text!styles/whitespace-colors-css.tmpl");
+        stylesTemplate     = require("text!styles/whitespace-colors-css.tmpl"),
+        Strings            = require("strings");
 
     
     // --- Settings ---
@@ -255,7 +256,7 @@ define(function (require, exports, module) {
         _command = CommandManager.get(commandId);
         
         if (!_command) {
-            _command = CommandManager.register("Show Whitespace", commandId, onCommandExecuted);
+            _command = CommandManager.register(Strings.CMD_TOGGLE, commandId, onCommandExecuted);
         } else {
             CommandManager.execute(commandId);
         }
