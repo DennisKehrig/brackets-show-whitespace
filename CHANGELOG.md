@@ -7,6 +7,7 @@
 * Add new `cm-dk-whitespace-empty-line-space` and `cm-dk-whitespace-empty-line-tab` tokens for recoloring blank lines
 * Add user-configurable colors using the Brackets preferences system
 * Add support for built-in Brackets dark theme
+* Add localization support
 * Minor code cleanup
 
 ## v2.0.1 - 2014/5/59
