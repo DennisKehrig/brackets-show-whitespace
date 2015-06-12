@@ -1,6 +1,6 @@
 /*
  * The MIT License (MIT)
- * Copyright (c) 2012 Dennis Kehrig. All rights reserved.
+ * Copyright (c) 2012-2015 Dennis Kehrig. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -31,19 +31,38 @@ define(function (require, exports, module) {
     
     // --- Required modules ---
 
-    var CommandManager     = brackets.getModule("command/CommandManager");
-    var EditorManager      = brackets.getModule("editor/EditorManager");
-    var ExtensionUtils     = brackets.getModule("utils/ExtensionUtils");
-    var Menus              = brackets.getModule("command/Menus");
-    var PreferencesManager = brackets.getModule("preferences/PreferencesManager");
-    var CodeMirror = brackets.getModule("thirdparty/CodeMirror2/lib/codemirror");
+    var _                  = brackets.getModule("thirdparty/lodash"),
+        AppInit            = brackets.getModule("utils/AppInit"),
+        CommandManager     = brackets.getModule("command/CommandManager"),
+        EditorManager      = brackets.getModule("editor/EditorManager"),
+        ExtensionUtils     = brackets.getModule("utils/ExtensionUtils"),
+        Menus              = brackets.getModule("command/Menus"),
+        PreferencesManager = brackets.getModule("preferences/PreferencesManager"),
+        stylesTemplate     = require("text!styles/whitespace-colors-css.tmpl"),
+        Strings            = require("strings");
 
     
     // --- Settings ---
     
     var commandId          = "denniskehrig.ShowWhitespace.toggle";
     var preferencesId      = "denniskehrig.ShowWhitespace";
-    var defaultPreferences = { checked: true };
+    var defaultPreferences = {
+        checked: true,
+        colors: {
+            "light": {
+                "empty": "#ccc",
+                "leading": "#ccc",
+                "trailing": "#ff0000",
+                "whitespace": "#ccc"
+            },
+            "dark": {
+                "empty": "#686963",
+                "leading": "#686963",
+                "trailing": "#ff0000",
+                "whitespace": "#686963"
+            }
+        }
+    };
 
     
     // --- State Variables ---
@@ -51,8 +70,8 @@ define(function (require, exports, module) {
     var _preferences,
         _command,
         _styleTag,
-        _Line,
-        _LineGetHTML;
+        _styleInline,
+        _styleInlineTemplate;
 
     
     // --- Functionality ---
@@ -133,6 +152,14 @@ define(function (require, exports, module) {
         };
     }
     
+    /**
+     * Apply the whitespace colors.
+     * This does NOT overwrite styles already defined by a theme.
+     */
+    function _applyColors() {
+        _styleInline.text(_styleInlineTemplate(_preferences.get("colors")));
+    }
+
     function updateEditorViaOverlay(editor) {
         var codeMirror = editor._codeMirror;
         if (!codeMirror) { return; }
@@ -176,7 +203,8 @@ define(function (require, exports, module) {
     }
 
     function onCheckedStateChange() {
-        _preferences.set("checked", Boolean(_command.getChecked()));
+        _preferences.set("checked", _command.getChecked());
+        _preferences.set("colors", _preferences.get("colors"));
         updateEditors();
     }
     
@@ -184,19 +212,39 @@ define(function (require, exports, module) {
         updateEditors(editor);
     }
 
+    function updateColors(e, data) {
+        if (data.ids.indexOf("theme") > -1 || data.ids.indexOf("colors") > -1) {
+            _applyColors();
+        }
+    }
+
     
     // --- Loaders and Unloaders ---
 
     function loadPreferences() {
         _preferences = PreferencesManager.getExtensionPrefs(preferencesId);
-        _preferences.definePreference("checked", "boolean", defaultPreferences["checked"]);
+        _preferences.definePreference("checked", "boolean", defaultPreferences.checked);
+        _preferences.definePreference("colors", "Object", defaultPreferences.colors);
+    }
+  
+    function loadPrefListeners() {
+        _preferences.on("change", updateColors);
+        PreferencesManager.getExtensionPrefs("themes").on("change", updateColors);
+    }
+  
+    function unloadPrefListeners() {
+        _preferences.off("change", updateColors);
+        PreferencesManager.getExtensionPrefs("themes").off("change", updateColors);
     }
 
 
     function loadStyle() {
-        ExtensionUtils.loadStyleSheet(module, "main.less").done(function (node) {
+        ExtensionUtils.loadStyleSheet(module, "styles/main.less").done(function (node) {
             _styleTag = node;
         });
+        _styleInline = $(ExtensionUtils.addEmbeddedStyleSheet(""));
+        _styleInlineTemplate = _.template(stylesTemplate);
+        _applyColors();
     }
 
     function unloadStyle() {
@@ -208,14 +256,14 @@ define(function (require, exports, module) {
         _command = CommandManager.get(commandId);
         
         if (!_command) {
-            _command = CommandManager.register("Show Whitespace", commandId, onCommandExecuted);
+            _command = CommandManager.register(Strings.CMD_TOGGLE, commandId, onCommandExecuted);
         } else {
-            _command._commandFn = onCommandExecuted;
+            CommandManager.execute(commandId);
         }
 
         _command.on("checkedStateChange", onCheckedStateChange);
         
-        // Apply preferences
+        // Enable/disable extension based on user preference
         _command.setChecked(_preferences.get("checked"));
     }
 
@@ -248,6 +296,7 @@ define(function (require, exports, module) {
     function load() {
         loadPreferences();
         loadStyle();
+        loadPrefListeners();
         loadCommand();
         loadMenuItem();
         loadEditorSync();
@@ -259,6 +308,7 @@ define(function (require, exports, module) {
         unloadMenuItem();
         unloadCommand();
         unloadStyle();
+        unloadPrefListeners();
     }
 
 
@@ -270,5 +320,5 @@ define(function (require, exports, module) {
     
     // --- Initializiation ---
     
-    load();
+    AppInit.appReady(load);
 });
