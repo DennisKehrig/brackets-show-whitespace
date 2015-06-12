@@ -261,7 +261,7 @@ define(function (require, exports, module) {
             CommandManager.execute(commandId);
         }
 
-        $(_command).on("checkedStateChange", onCheckedStateChange);
+        _command.on("checkedStateChange", onCheckedStateChange);
         
         // Enable/disable extension based on user preference
         _command.setChecked(_preferences.get("checked"));
@@ -269,7 +269,7 @@ define(function (require, exports, module) {
 
     function unloadCommand() {
         _command.setChecked(false);
-        $(_command).off("checkedStateChange", onCheckedStateChange);
+        _command.off("checkedStateChange", onCheckedStateChange);
         _command._commandFn = null;
     }
 
@@ -284,11 +284,11 @@ define(function (require, exports, module) {
     
     
     function loadEditorSync() {
-        $(EditorManager).on("activeEditorChange", onActiveEditorChange);
+        EditorManager.on("activeEditorChange", onActiveEditorChange);
     }
 
     function unloadEditorSync() {
-        $(EditorManager).off("activeEditorChange", onActiveEditorChange);
+        EditorManager.off("activeEditorChange", onActiveEditorChange);
     }
 
     

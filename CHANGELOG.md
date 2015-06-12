@@ -2,12 +2,13 @@
 
 ## v2.1.0 - Unreleased
 
-* **Requires Brackets v0.42 and higher**
+* **Requires Brackets 1.1 or higher**
 * Remove CodeMirror 2 support
 * Add new `cm-dk-whitespace-empty-line-space` and `cm-dk-whitespace-empty-line-tab` tokens for recoloring blank lines
 * Add user-configurable colors using the Brackets preferences system
 * Add support for built-in Brackets dark theme
 * Add localization support
+* Update events listeners to use event system introduced in Brackets 1.1
 * Minor code cleanup
 
 ## v2.0.1 - 2014/5/59
