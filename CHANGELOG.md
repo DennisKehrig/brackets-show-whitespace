@@ -8,6 +8,7 @@
 * Add user-configurable colors using the Brackets preferences system
 * Add support for built-in Brackets dark theme
 * Add localization support
+* Rename `checked` preference to `enabled`
 * Update events listeners to use event system introduced in Brackets 1.1
 * Minor code cleanup
 

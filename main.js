@@ -44,10 +44,10 @@ define(function (require, exports, module) {
     
     // --- Settings ---
     
-    var commandId          = "denniskehrig.ShowWhitespace.toggle";
-    var preferencesId      = "denniskehrig.ShowWhitespace";
+    var commandID          = "denniskehrig.ShowWhitespace.toggle";
+    var preferencesID      = "denniskehrig.ShowWhitespace";
     var defaultPreferences = {
-        checked: true,
+        enabled: true,
         colors: {
             "light": {
                 "empty": "#ccc",
@@ -160,7 +160,7 @@ define(function (require, exports, module) {
         _styleInline.text(_styleInlineTemplate(_preferences.get("colors")));
     }
 
-    function updateEditorViaOverlay(editor) {
+    function updateOverlay(editor) {
         var codeMirror = editor._codeMirror;
         if (!codeMirror) { return; }
         
@@ -189,7 +189,7 @@ define(function (require, exports, module) {
             editors.push(includeEditor);
         }
         
-        editors.forEach(updateEditorViaOverlay);
+        editors.forEach(updateOverlay);
     }
     
     // --- Event Handlers ---
@@ -203,8 +203,9 @@ define(function (require, exports, module) {
     }
 
     function onCheckedStateChange() {
-        _preferences.set("checked", _command.getChecked());
+        _preferences.set("enabled", _command.getChecked());
         _preferences.set("colors", _preferences.get("colors"));
+        _preferences.save();
         updateEditors();
     }
     
@@ -222,13 +223,16 @@ define(function (require, exports, module) {
     // --- Loaders and Unloaders ---
 
     function loadPreferences() {
-        _preferences = PreferencesManager.getExtensionPrefs(preferencesId);
-        _preferences.definePreference("checked", "boolean", defaultPreferences.checked);
+        _preferences = PreferencesManager.getExtensionPrefs(preferencesID);
+        _preferences.definePreference("enabled", "boolean", defaultPreferences.enabled);
         _preferences.definePreference("colors", "Object", defaultPreferences.colors);
     }
   
     function loadPrefListeners() {
-        _preferences.on("change", updateColors);
+        _preferences.on("change", function (e, data) {
+            _command.setChecked(_preferences.get("enabled"));
+            updateColors(e, data);
+        });
         PreferencesManager.getExtensionPrefs("themes").on("change", updateColors);
     }
   
@@ -253,18 +257,18 @@ define(function (require, exports, module) {
 
     
     function loadCommand() {
-        _command = CommandManager.get(commandId);
+        _command = CommandManager.get(commandID);
         
         if (!_command) {
-            _command = CommandManager.register(Strings.CMD_TOGGLE, commandId, onCommandExecuted);
+            _command = CommandManager.register(Strings.CMD_TOGGLE, commandID, onCommandExecuted);
         } else {
-            CommandManager.execute(commandId);
+            CommandManager.execute(commandID);
         }
 
         _command.on("checkedStateChange", onCheckedStateChange);
         
         // Enable/disable extension based on user preference
-        _command.setChecked(_preferences.get("checked"));
+        _command.setChecked(_preferences.get("enabled"));
     }
 
     function unloadCommand() {
@@ -275,11 +279,11 @@ define(function (require, exports, module) {
 
     
     function loadMenuItem() {
-        Menus.getMenu("view-menu").addMenuItem(commandId, "Ctrl-Alt-W");
+        Menus.getMenu("view-menu").addMenuItem(commandID, "Ctrl-Alt-W");
     }
 
     function unloadMenuItem() {
-        Menus.getMenu("view-menu").removeMenuItem(commandId);
+        Menus.getMenu("view-menu").removeMenuItem(commandID);
     }
     
     
@@ -311,14 +315,5 @@ define(function (require, exports, module) {
         unloadPrefListeners();
     }
 
-
-    // --- Exports ---
-    
-    exports.load = load;
-    exports.unload = unload;
-
-    
-    // --- Initializiation ---
-    
     AppInit.appReady(load);
 });
