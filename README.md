@@ -14,6 +14,7 @@ This extension uses [CodeMirror](http://codemirror.net/) overlays to construct a
 * `.cm-dk-whitespace-leading-space`: Whitespace that makes up any indentation
 * `.cm-dk-whitespace-empty-line-space`: Any lines that consist solely of whitespace
 * `.cm-dk-whitespace-trailing-space`: Whitespace at the end of a line after any characters
+* `.cm-dk-whitespace-*-nonbrk-space`: A [non-breaking space](https://en.wikipedia.org/wiki/Non-breaking_space), which can be classed with any location (such as `.cm-dk-whitespace-empty-line-nonbrk-space`). This is the only class that does not have a tab counterpart.
 
 The primary extension styling is defined in `styles/main.less`, which is compiled into CSS, while whitespace colors are defined in Brackets preferences and rendered into `styles/whitespace-colors-css.tmpl`. Both files are then loaded into Brackets on startup.
 
