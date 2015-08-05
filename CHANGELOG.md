@@ -3,11 +3,12 @@
 ## v2.1.0 - Unreleased
 
 * **Requires Brackets 1.1 or higher**
-* Remove CodeMirror 2 support
 * Add new `cm-dk-whitespace-empty-line-space` and `cm-dk-whitespace-empty-line-tab` tokens for recoloring blank lines
+* Add new `cm-dk-whitespace-*-nonbrk-space` tokens for recoloring non-breaking spaces
 * Add user-configurable colors using the Brackets preferences system
 * Add support for built-in Brackets dark theme
 * Add localization support
+* Remove CodeMirror 2 support
 * Rename `checked` preference to `enabled`
 * Update events listeners to use event system introduced in Brackets 1.1
 * Minor code cleanup
