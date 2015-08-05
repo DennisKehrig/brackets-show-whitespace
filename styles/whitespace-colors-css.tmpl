@@ -11,6 +11,10 @@
 .CodeMirror .cm-dk-whitespace-empty-line-tab:before { background-color: <%= light.empty %>; }
 .CodeMirror .cm-dk-whitespace-trailing-space:before,
 .CodeMirror .cm-dk-whitespace-trailing-tab:before { background-color: <%= light.trailing %>; }
+.CodeMirror .cm-dk-whitespace-nonbrk-space:before,
+.CodeMirror .cm-dk-whitespace-leading-nonbrk-space:before,
+.CodeMirror .cm-dk-whitespace-empty-line-nonbrk-space:before,
+.CodeMirror .cm-dk-whitespace-trailing-nonbrk-space:before { background-color: <%= light.trailing %>; }
 
 /* Dark theme */
 .dark .CodeMirror .cm-dk-whitespace-space:before,
@@ -21,3 +25,7 @@
 .dark .CodeMirror .cm-dk-whitespace-empty-line-tab:before { background-color: <%= dark.empty %>; }
 .dark .CodeMirror .cm-dk-whitespace-trailing-space:before,
 .dark .CodeMirror .cm-dk-whitespace-trailing-tab:before { background-color: <%= dark.trailing %>; }
+.dark .CodeMirror .cm-dk-whitespace-nonbrk-space:before,
+.dark .CodeMirror .cm-dk-whitespace-leading-nonbrk-space:before,
+.dark .CodeMirror .cm-dk-whitespace-empty-line-nonbrk-space:before,
+.dark .CodeMirror .cm-dk-whitespace-trailing-nonbrk-space:before { background-color: <%= dark.trailing %>; }
