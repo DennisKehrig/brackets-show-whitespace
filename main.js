@@ -102,7 +102,7 @@ define(function (require, exports, module) {
                     _isEmptyLine = false;
                     
                     _trailingOffset = stream.string.length;
-                    trailing = stream.string.match(/[ \t]+$/);
+                    trailing = stream.string.match(/[ \t\u00A0]+$/);
                     if (trailing) {
                         _trailingOffset -= trailing[0].length;
                         // Everything is whitespace
@@ -115,7 +115,7 @@ define(function (require, exports, module) {
                 // Peek ahead one character at a time
                 // Wrapping the assignment in a Boolean makes JSLint happy
                 while (Boolean(ch = stream.peek())) {
-                    if (ch === " " || ch === "\t") {
+                    if (ch === " " || ch === "\t" || ch === "\xA0") {
                         if (ateCode) {
                             // Return now to mark all code seen so far as not necessary to highlight
                             return null;
@@ -137,7 +137,7 @@ define(function (require, exports, module) {
                         
                         tokenStyle  += "dk-whitespace-";
                         tokenStyle  += (_isEmptyLine ? "empty-line-" : (_isLeading ? "leading-" : (_isTrailing ? "trailing-" : "")));
-                        tokenStyle  += (ch === " " ? "space" : "tab");
+                        tokenStyle  += (ch === " " ? "space" : (ch === "\xA0" ? "nonbrk-space" : "tab"));
                         tokenStyle  += (_appendSpace ? " " : "");
                         
                         return tokenStyle;
