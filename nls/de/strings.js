@@ -25,13 +25,6 @@
 /*jslint vars: true, plusplus: true, devel: true, regexp: true, nomen: true, indent: 4, maxerr: 50 */
 /*global define, $, brackets */
 
-define(function (require, exports, module) {
-
-    "use strict";
-
-    module.exports = {
-        root: true,
-        "fi": true,
-        "de": true
-    };
+define({
+    "CMD_TOGGLE": "Whitespace anzeigen"
 });
