@@ -4,7 +4,7 @@
 
 ## Usage
 
-Activate using `View > Show Whitespace` or by using the shortcut `Ctrl-Shift-W` (`Command-Shift-W` on Mac OS X). The extension state is remembered across Brackets launches. Whitespace in all editor windows are visualized, including inline editors.
+Activate using `View > Show Whitespace` or by using the shortcut `Ctrl-Alt-W` (`Command-Shift-W` on Mac OS X). The extension state is remembered across Brackets launches. Whitespace in all editor windows are visualized, including inline editors.
 
 ## Technical Details
 
