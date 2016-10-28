@@ -32,6 +32,7 @@ define(function (require, exports, module) {
     module.exports = {
         root: true,
         "fi": true,
-        "de": true
+        "de": true,
+        "ru": true
     };
 });
